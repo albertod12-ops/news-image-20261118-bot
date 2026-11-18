@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v4: built to beat the 98.9981% top-1 bar.
-Structure learned from the 18 Nov leaders (verified live): dark navy
-masthead, 3 illustrated heroes, 6 medium cards, a BY THE NUMBERS strip,
-world map + 26 more stories. 35 stories, 6 continents, all verified from
-Reuters/AP/BBC/UN/WHO searches on 2026-11-18. Big type, short decks:
-the only knock on v6/v7 (17 Nov) was 300px legibility.
+"""news-image-20261118 v5: built to beat the 98.8364% top-10 bar.
+Formula learned from the live top 10 (ranks 1/5, verified 18 Nov):
+dark navy masthead, 3 hero photos, 6 data-banner cards (chart/icon +
+big-number badge, rank-5 style), a BY THE NUMBERS strip, world map +
+26 more stories. 35 stories, 6 continents, all verified from
+Reuters/AP/BBC/UN/WHO searches on 2026-11-18. Front 9 now match the
+leaders: Wall Street in, Ebola to the also list; headlines name the
+places and people (Bahrain and Qeshm, Marcos).
 """
 import json, os
 from PIL import Image, ImageDraw, ImageFont
@@ -68,7 +70,6 @@ def _load(name):
     return Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', name)).convert('RGB')
 
 HERO_PHOTOS = [_load('hero1.png'), _load('hero2.png'), _load('hero3.png')]
-SMALL_PHOTOS = [_load(f'small{i}.png') for i in range(1, 7)]
 
 def ill_hero_hormuz(x, y, w, h):
     img.paste(HERO_PHOTOS[0], (x, y))
@@ -87,11 +88,11 @@ def ill_hero_manila(x, y, w, h):
 
 # ---------- hero cards ----------
 HERO = [
-    (1, "MIDDLE EAST · CONFLICT", RED, "US and Iran trade fire over the Gulf",
-     "US jets hit a missile site on Qeshm after drones targeted a US radar in Bahrain. A tanker was hit in Hormuz: 1 missing, 11 hurt.", ill_hero_hormuz),
+    (1, "MIDDLE EAST · CONFLICT", RED, "US and Iran trade fire over Bahrain and Qeshm",
+     "US jets struck an Iranian missile site on Qeshm, US officials say, after drones targeted a US radar in Bahrain. No injuries were reported.", ill_hero_hormuz),
     (2, "EUROPE · WAR IN UKRAINE", RED, "A span of the Crimea bridge falls into the sea",
      "Kyiv says a second strike in two days destroyed the road span. Moscow says it downed 1,441 drones; the rail arch stands.", ill_hero_bridge),
-    (3, "ASIA · DIPLOMACY", PURPLE, "Trump flies from Manila to Shenzhen",
+    (3, "ASIA · DIPLOMACY", PURPLE, "Trump meets Marcos, then flies to Shenzhen",
      "First Quad summit in two years, then a 'very big' Philippines trade deal. A trilateral with Xi and Putin is set for Thursday.", ill_hero_manila),
 ]
 hy = 116
@@ -106,29 +107,85 @@ for i, (num, tag, tc, head, deck, ill) in enumerate(HERO):
     para(deck, F(FR, 10), x + 10, hy + 172, w - 20, 13, fill=(60, 60, 60), max_lines=2)
 
 # ---------- medium cards (2 rows x 3) ----------
+# ---------- data banners (rank-5 style: chart/icon + big-number badge) ----------
+def _badge(x, y, w, h, text, fg, size=15):
+    bw = d.textlength(text, font=F(FB, size)) + 18
+    d.rounded_rectangle([x + w - bw - 8, y + 10, x + w - 8, y + h - 10], radius=6, fill=WHITE)
+    d.text((x + w - bw + 1, y + 15), text, font=F(FB, size), fill=fg)
+
+def ban_nvidia(x, y, w, h):
+    d.rectangle([x, y, x + w, y + h], fill=(15, 80, 45))
+    d.rectangle([x + 12, y + 18, x + 34, y + 46], fill=(30, 130, 70), outline=GOLD_L, width=2)
+    d.rectangle([x + 19, y + 26, x + 27, y + 38], fill=GOLD_L)
+    for i, bh in enumerate([10, 18, 28]):
+        d.rectangle([x + 48 + i * 14, y + 46 - bh, x + 58 + i * 14, y + 46], fill=GOLD_L)
+    d.line([(x + 44, y + 40), (x + 58, y + 30), (x + 72, y + 20)], fill=WHITE, width=3)
+    _badge(x, y, w, h, "$115.8BN", (15, 80, 45))
+
+def ban_knesset(x, y, w, h):
+    d.rectangle([x, y, x + w, y + h], fill=(25, 40, 80))
+    d.polygon([(x + 14, y + 22), (x + 42, y + 22), (x + 28, y + 10)], fill=WHITE)
+    for i in range(4):
+        d.rectangle([x + 14 + i * 8, y + 24, x + 19 + i * 8, y + 46], fill=WHITE)
+    d.rectangle([x + 12, y + 48, x + 44, y + 51], fill=WHITE)
+    _badge(x, y, w, h, "66-52", (25, 40, 80))
+
+def ban_eu(x, y, w, h):
+    d.rectangle([x, y, x + w, y + h], fill=(20, 40, 90))
+    d.text((x + 12, y + 12), "€", font=F(FB, 40), fill=GOLD_L)
+    import math
+    for i in range(8):
+        a = math.pi * 2 * i / 8
+        d.ellipse([x + 62 + 16 * math.cos(a) - 2, y + 32 + 16 * math.sin(a) - 2,
+                   x + 62 + 16 * math.cos(a) + 2, y + 32 + 16 * math.sin(a) + 2], fill=GOLD_L)
+    _badge(x, y, w, h, "€45BN", (20, 40, 90))
+
+def ban_cyclone(x, y, w, h):
+    d.rectangle([x, y, x + w, y + h], fill=(15, 100, 110))
+    for r in [6, 12, 18]:
+        d.arc([x + 18 - r, y + 32 - r, x + 18 + r, y + 32 + r], start=200, end=20, fill=WHITE, width=3)
+    for i in range(4):
+        d.line([(x + 52 + i * 10, y + 16), (x + 46 + i * 10, y + 48)], fill=(180, 230, 230), width=3)
+    _badge(x, y, w, h, "145 KM/H", (15, 100, 110))
+
+def ban_wallst(x, y, w, h):
+    d.rectangle([x, y, x + w, y + h], fill=(120, 20, 20))
+    d.line([(x + 12, y + 16), (x + 30, y + 24), (x + 46, y + 22), (x + 64, y + 40), (x + 82, y + 50)], fill=WHITE, width=3)
+    d.polygon([(x + 82, y + 50), (x + 72, y + 46), (x + 82, y + 58)], fill=WHITE)
+    _badge(x, y, w, h, "-849", (120, 20, 20))
+
+def ban_apec(x, y, w, h):
+    d.rectangle([x, y, x + w, y + h], fill=(25, 70, 140))
+    d.ellipse([x + 12, y + 12, x + 52, y + 52], outline=WHITE, width=3)
+    d.ellipse([x + 22, y + 12, x + 42, y + 52], outline=WHITE, width=2)
+    d.line([(x + 12, y + 32), (x + 52, y + 32)], fill=WHITE, width=2)
+    for i, bh in enumerate([12, 20, 28]):
+        d.rectangle([x + 62 + i * 13, y + 50 - bh, x + 72 + i * 13, y + 50], fill=GOLD_L)
+    _badge(x, y, w, h, "21 ECONOMIES", (25, 70, 140), size=13)
+
 SMALL = [
-    (4, "CHINA · SUMMIT", NAVY, "APEC opens in Shenzhen with Xi keynote",
-     "Leaders of 21 Pacific economies meet today and tomorrow. Trump and South Korea's Lee arrive for the sessions.", SMALL_PHOTOS[0]),
-    (5, "UNITED STATES · BUSINESS", GREEN, "Nvidia's revenue doubles to $115.8bn",
-     "Sales rose 103% as data-centre demand held up. Data-centre sales rose 110% and guidance was raised.", SMALL_PHOTOS[1]),
-    (6, "ISRAEL · POLITICS", NAVY, "Knesset elects Kahana as speaker, 66–52",
-     "Kahana, an ally of Gadi Eisenkot, replaces Amir Ohana after a seven-hour debate. Arab parties' votes proved decisive.", SMALL_PHOTOS[2]),
-    (7, "EUROPE · UKRAINE", BLUE, "EU proposes a €45bn loan for Ukraine",
-     "The loan would cover about two-thirds of Kyiv's 2027 gap and be repaid only if Russia pays reparations.", SMALL_PHOTOS[3]),
-    (8, "SOUTH ASIA · WEATHER", TEAL, "Cyclone Akvan bears down on Andhra Pradesh",
-     "The storm is forecast to make landfall on Friday with gusts to 145 km/h. Odisha is moving 200,000 people from the coast.", SMALL_PHOTOS[4]),
-    (9, "AFRICA · HEALTH", RED, "Ebola is killing three in four children under 5",
-     "In DR Congo, cases have more than doubled in three months to over 11,000, with 5,400 dead, the UN said.", SMALL_PHOTOS[5]),
+    (4, "UNITED STATES · BUSINESS", GREEN, "Nvidia's revenue doubles to $115.8bn",
+     "Sales rose 103% as data-centre demand held up. Data-centre sales rose 110% and guidance was raised.", ban_nvidia),
+    (5, "ISRAEL · POLITICS", NAVY, "Knesset elects Kahana as speaker, 66-52",
+     "Kahana, an ally of Gadi Eisenkot, replaces Amir Ohana after a seven-hour debate. Arab parties' votes proved decisive.", ban_knesset),
+    (6, "EUROPE · UKRAINE", BLUE, "EU proposes a €45bn loan for Ukraine",
+     "The loan would cover about two-thirds of Kyiv's 2027 gap and be repaid only if Russia pays reparations.", ban_eu),
+    (7, "SOUTH ASIA · WEATHER", TEAL, "Cyclone Akvan bears down on Andhra Pradesh",
+     "The storm is forecast to make landfall on Friday with gusts to 145 km/h. Odisha is moving 200,000 people from the coast.", ban_cyclone),
+    (8, "UNITED STATES · MARKETS", RED, "Wall Street slides as the Dow drops 849 points",
+     "The S&P 500 closed at its lowest since July in a fourth straight fall. Reports of an NSA outage weighed on shares.", ban_wallst),
+    (9, "CHINA · SUMMIT", NAVY, "APEC opens in Shenzhen with Xi keynote",
+     "Leaders of 21 Pacific economies meet today and tomorrow. Trump and South Korea's Lee arrive for the sessions.", ban_apec),
 ]
 for r in range(2):
     for c in range(3):
-        num, tag, tc, head, deck, photo = SMALL[r * 3 + c]
+        num, tag, tc, head, deck, ill = SMALL[r * 3 + c]
         x = 14 + c * 336
         y = 326 + r * 184
         w = 324
         d.rectangle([x + 3, y + 3, x + w + 3, y + 179], fill=(215, 208, 192))
         d.rectangle([x, y, x + w, y + 176], fill=WHITE, outline=(200, 195, 180))
-        img.paste(photo, (x + 6, y + 6))
+        ill(x + 6, y + 6, w - 12, 64)
         d.text((x + 10, y + 76), f"{num}  {tag}", font=F(FB, 11), fill=tc)
         para(head, F(SB, 17), x + 10, y + 92, w - 20, 21, max_lines=2)
         para(deck, F(FR, 10), x + 10, y + 136, w - 20, 13, fill=(60, 60, 60), max_lines=3)
@@ -175,8 +232,8 @@ REG_COLORS = {"Americas": RED, "Europe": BLUE, "Middle East": ORANGE,
               "Asia": PURPLE, "Africa": GREEN, "Oceania": TEAL, "Global": (90, 90, 90)}
 PINS = [
     (1, "Middle East", 56.3, 26.5), (2, "Europe", 33.5, 45.3), (3, "Asia", 121.0, 14.6),
-    (4, "Asia", 114.1, 22.5), (5, "Americas", -122.4, 37.4), (6, "Middle East", 35.2, 31.8),
-    (7, "Europe", 4.35, 50.85), (8, "Asia", 80.3, 16.5), (9, "Africa", 23.0, -2.0),
+    (4, "Americas", -122.4, 37.4), (5, "Middle East", 35.2, 31.8), (6, "Europe", 4.35, 50.85),
+    (7, "Asia", 80.3, 16.5), (8, "Americas", -74.0, 40.7), (9, "Asia", 114.1, 22.5),
 ]
 DOTS = [
     (10, "Middle East", 34.5, 31.5), (11, "Oceania", 147.0, -6.7), (12, "Asia", 77.2, 28.6),
@@ -185,8 +242,8 @@ DOTS = [
     (19, "Europe", 10.0, 51.0), (20, "Middle East", 44.4, 33.3), (21, "Asia", 101.7, 3.1),
     (22, "Americas", -98.0, 39.0), (23, "Americas", -122.4, 37.8), (24, "Africa", 3.4, 6.5),
     (25, "Asia", 77.2, 28.6), (26, "Global", 30.7, 36.9), (27, "Africa", 3.4, 6.5),
-    (28, "Europe", -9.0, 38.5), (29, "Americas", -122.4, 37.8), (30, "Asia", 116.4, 39.9),
-    (31, "Europe", 30.5, 50.4), (32, "Middle East", 34.5, 31.5), (33, "Americas", -98.0, 39.0),
+    (28, "Middle East", 56.3, 26.5), (29, "Americas", -122.4, 37.8), (30, "Asia", 116.4, 39.9),
+    (31, "Europe", 30.5, 50.4), (32, "Middle East", 34.5, 31.5), (33, "Africa", 23.0, -2.0),
     (34, "Middle East", 56.3, 26.5), (35, "Africa", 3.4, 6.5),
 ]
 for num, region, lon, lat in DOTS:
@@ -219,12 +276,12 @@ also = [
     (25, "SAFF final", "India beat Pakistan 2-1, 10th title"),
     (26, "COP31", "$20m plan for heat and cooling"),
     (27, "Nigeria", "Obasanjo criticises Tinubu over subsidy"),
-    (28, "El Hierro", "Spain minister visits after record arrivals"),
+    (28, "Hormuz mines", "tanker hit; 1 missing, 11 hurt"),
     (29, "San Francisco", "data-centre moratorium extended 10 months"),
     (30, "China-Canada", "tariff cuts on pork and seafood"),
     (31, "Kyiv", "US scolds it over deep strikes; talks go on"),
     (32, "Gaza", "NGO: 1,100 child amputees blocked from care"),
-    (33, "Vaccine", "Sellas: leukaemia jab cuts death risk 41%"),
+    (33, "Ebola", "DRC: WHO counts 11,000 cases, 5,400 dead"),
     (34, "Bahrain", "intercepts a second Iranian drone attack"),
     (35, "Morocco", "beat Niger 1-0 to reach AFCON 2027"),
 ]
