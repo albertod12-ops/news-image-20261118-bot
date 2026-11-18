@@ -17,6 +17,8 @@ of your own:
 A missing source, an empty source, or a copy that does not match the
 source byte for byte is a loud failure (exit 1), never a partial entry.
 """
+
+# v4 entry (2026-11-18): the front page carries nine photorealistic pictures.
 import hashlib
 import os
 import shutil
