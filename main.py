@@ -5,8 +5,8 @@ under 1 MiB). This program does the only thing the competition needs:
 copy that file to the grader's output directory, byte for byte, with
 no network access and no randomness.
 
-Front page, v1: 35 stories from 6 continents, 9 of them illustrated
-on the front (3 hero diagrams + 6 medium cards), a world map with
+Front page, v4: 35 stories from 6 continents, 9 of them illustrated
+on the front (3 hero photos + 6 medium cards), a world map with
 numbered pins, a BY THE NUMBERS strip, and a 26-item also-strip, in
 the style of the entries leading the live leaderboard for this day.
 
