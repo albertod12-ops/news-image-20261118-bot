@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v5: built to beat the 98.8364% top-10 bar.
-Formula learned from the live top 10 (ranks 1/5, verified 18 Nov):
-dark navy masthead, 3 hero photos, 6 data-banner cards (chart/icon +
-big-number badge, rank-5 style), a BY THE NUMBERS strip, world map +
-26 more stories. 35 stories, 6 continents, all verified from
-Reuters/AP/BBC/UN/WHO searches on 2026-11-18. Front 9 now match the
-leaders: Wall Street in, Ebola to the also list; headlines name the
-places and people (Bahrain and Qeshm, Marcos).
+"""news-image-20261118 v6: v4's photos + v5's lessons, without v5's banners.
+User judged v5's flat data banners worse than v4's photos, so all 9
+front stories are photorealistic again (3 heroes + 6 card photos,
+Wall Street photo new for #8); the upgrades that stay are the ones
+that do not change the look: front 9 match the live leaders (Wall
+Street in, Ebola to the also list), headlines name the places and
+people (Bahrain and Qeshm, Marcos). 35 stories, 6 continents, all
+verified from Reuters/AP/BBC/UN/WHO searches on 2026-11-18.
 """
 import json, os
 from PIL import Image, ImageDraw, ImageFont
@@ -70,6 +70,8 @@ def _load(name):
     return Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', name)).convert('RGB')
 
 HERO_PHOTOS = [_load('hero1.png'), _load('hero2.png'), _load('hero3.png')]
+SMALL_PHOTOS = [_load(n) for n in ['small2.png', 'small3.png', 'small4.png',
+                                     'small5.png', 'small-wallst.png', 'small1.png']]
 
 def ill_hero_hormuz(x, y, w, h):
     img.paste(HERO_PHOTOS[0], (x, y))
@@ -107,85 +109,29 @@ for i, (num, tag, tc, head, deck, ill) in enumerate(HERO):
     para(deck, F(FR, 10), x + 10, hy + 172, w - 20, 13, fill=(60, 60, 60), max_lines=2)
 
 # ---------- medium cards (2 rows x 3) ----------
-# ---------- data banners (rank-5 style: chart/icon + big-number badge) ----------
-def _badge(x, y, w, h, text, fg, size=15):
-    bw = d.textlength(text, font=F(FB, size)) + 18
-    d.rounded_rectangle([x + w - bw - 8, y + 10, x + w - 8, y + h - 10], radius=6, fill=WHITE)
-    d.text((x + w - bw + 1, y + 15), text, font=F(FB, size), fill=fg)
-
-def ban_nvidia(x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(15, 80, 45))
-    d.rectangle([x + 12, y + 18, x + 34, y + 46], fill=(30, 130, 70), outline=GOLD_L, width=2)
-    d.rectangle([x + 19, y + 26, x + 27, y + 38], fill=GOLD_L)
-    for i, bh in enumerate([10, 18, 28]):
-        d.rectangle([x + 48 + i * 14, y + 46 - bh, x + 58 + i * 14, y + 46], fill=GOLD_L)
-    d.line([(x + 44, y + 40), (x + 58, y + 30), (x + 72, y + 20)], fill=WHITE, width=3)
-    _badge(x, y, w, h, "$115.8BN", (15, 80, 45))
-
-def ban_knesset(x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(25, 40, 80))
-    d.polygon([(x + 14, y + 22), (x + 42, y + 22), (x + 28, y + 10)], fill=WHITE)
-    for i in range(4):
-        d.rectangle([x + 14 + i * 8, y + 24, x + 19 + i * 8, y + 46], fill=WHITE)
-    d.rectangle([x + 12, y + 48, x + 44, y + 51], fill=WHITE)
-    _badge(x, y, w, h, "66-52", (25, 40, 80))
-
-def ban_eu(x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(20, 40, 90))
-    d.text((x + 12, y + 12), "€", font=F(FB, 40), fill=GOLD_L)
-    import math
-    for i in range(8):
-        a = math.pi * 2 * i / 8
-        d.ellipse([x + 62 + 16 * math.cos(a) - 2, y + 32 + 16 * math.sin(a) - 2,
-                   x + 62 + 16 * math.cos(a) + 2, y + 32 + 16 * math.sin(a) + 2], fill=GOLD_L)
-    _badge(x, y, w, h, "€45BN", (20, 40, 90))
-
-def ban_cyclone(x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(15, 100, 110))
-    for r in [6, 12, 18]:
-        d.arc([x + 18 - r, y + 32 - r, x + 18 + r, y + 32 + r], start=200, end=20, fill=WHITE, width=3)
-    for i in range(4):
-        d.line([(x + 52 + i * 10, y + 16), (x + 46 + i * 10, y + 48)], fill=(180, 230, 230), width=3)
-    _badge(x, y, w, h, "145 KM/H", (15, 100, 110))
-
-def ban_wallst(x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(120, 20, 20))
-    d.line([(x + 12, y + 16), (x + 30, y + 24), (x + 46, y + 22), (x + 64, y + 40), (x + 82, y + 50)], fill=WHITE, width=3)
-    d.polygon([(x + 82, y + 50), (x + 72, y + 46), (x + 82, y + 58)], fill=WHITE)
-    _badge(x, y, w, h, "-849", (120, 20, 20))
-
-def ban_apec(x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(25, 70, 140))
-    d.ellipse([x + 12, y + 12, x + 52, y + 52], outline=WHITE, width=3)
-    d.ellipse([x + 22, y + 12, x + 42, y + 52], outline=WHITE, width=2)
-    d.line([(x + 12, y + 32), (x + 52, y + 32)], fill=WHITE, width=2)
-    for i, bh in enumerate([12, 20, 28]):
-        d.rectangle([x + 62 + i * 13, y + 50 - bh, x + 72 + i * 13, y + 50], fill=GOLD_L)
-    _badge(x, y, w, h, "21 ECONOMIES", (25, 70, 140), size=13)
-
 SMALL = [
     (4, "UNITED STATES · BUSINESS", GREEN, "Nvidia's revenue doubles to $115.8bn",
-     "Sales rose 103% as data-centre demand held up. Data-centre sales rose 110% and guidance was raised.", ban_nvidia),
+     "Sales rose 103% as data-centre demand held up. Data-centre sales rose 110% and guidance was raised.", SMALL_PHOTOS[0]),
     (5, "ISRAEL · POLITICS", NAVY, "Knesset elects Kahana as speaker, 66-52",
-     "Kahana, an ally of Gadi Eisenkot, replaces Amir Ohana after a seven-hour debate. Arab parties' votes proved decisive.", ban_knesset),
+     "Kahana, an ally of Gadi Eisenkot, replaces Amir Ohana after a seven-hour debate. Arab parties' votes proved decisive.", SMALL_PHOTOS[1]),
     (6, "EUROPE · UKRAINE", BLUE, "EU proposes a €45bn loan for Ukraine",
-     "The loan would cover about two-thirds of Kyiv's 2027 gap and be repaid only if Russia pays reparations.", ban_eu),
+     "The loan would cover about two-thirds of Kyiv's 2027 gap and be repaid only if Russia pays reparations.", SMALL_PHOTOS[2]),
     (7, "SOUTH ASIA · WEATHER", TEAL, "Cyclone Akvan bears down on Andhra Pradesh",
-     "The storm is forecast to make landfall on Friday with gusts to 145 km/h. Odisha is moving 200,000 people from the coast.", ban_cyclone),
+     "The storm is forecast to make landfall on Friday with gusts to 145 km/h. Odisha is moving 200,000 people from the coast.", SMALL_PHOTOS[3]),
     (8, "UNITED STATES · MARKETS", RED, "Wall Street slides as the Dow drops 849 points",
-     "The S&P 500 closed at its lowest since July in a fourth straight fall. Reports of an NSA outage weighed on shares.", ban_wallst),
+     "The S&P 500 closed at its lowest since July in a fourth straight fall. Reports of an NSA outage weighed on shares.", SMALL_PHOTOS[4]),
     (9, "CHINA · SUMMIT", NAVY, "APEC opens in Shenzhen with Xi keynote",
-     "Leaders of 21 Pacific economies meet today and tomorrow. Trump and South Korea's Lee arrive for the sessions.", ban_apec),
+     "Leaders of 21 Pacific economies meet today and tomorrow. Trump and South Korea's Lee arrive for the sessions.", SMALL_PHOTOS[5]),
 ]
 for r in range(2):
     for c in range(3):
-        num, tag, tc, head, deck, ill = SMALL[r * 3 + c]
+        num, tag, tc, head, deck, photo = SMALL[r * 3 + c]
         x = 14 + c * 336
         y = 326 + r * 184
         w = 324
         d.rectangle([x + 3, y + 3, x + w + 3, y + 179], fill=(215, 208, 192))
         d.rectangle([x, y, x + w, y + 176], fill=WHITE, outline=(200, 195, 180))
-        ill(x + 6, y + 6, w - 12, 64)
+        img.paste(photo, (x + 6, y + 6))
         d.text((x + 10, y + 76), f"{num}  {tag}", font=F(FB, 11), fill=tc)
         para(head, F(SB, 17), x + 10, y + 92, w - 20, 21, max_lines=2)
         para(deck, F(FR, 10), x + 10, y + 136, w - 20, 13, fill=(60, 60, 60), max_lines=3)
