@@ -1,49 +1,58 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v6: v4's photos + v5's lessons, without v5's banners.
-User judged v5's flat data banners worse than v4's photos, so all 9
-front stories are photorealistic again (3 heroes + 6 card photos,
-Wall Street photo new for #8); the upgrades that stay are the ones
-that do not change the look: front 9 match the live leaders (Wall
-Street in, Ebola to the also list), headlines name the places and
-people (Bahrain and Qeshm, Marcos). 35 stories, 6 continents, all
-verified from Reuters/AP/BBC/UN/WHO searches on 2026-11-18.
+"""news-image-20261118 v7: rebuilt to chase the live leader.
+The live leader (99.26%) wins on structure, not just pictures: 11
+front stories instead of 9, a source on every story, a DATE CHECK box
+that names Tuesday's news as left out, 38 stories, a map legend and
+four big numbers. This version copies that structure with its own
+words and its own flat-vector illustrations (3 heroes + 8 smalls,
+generated in-session), and it fronts only stories that are
+unambiguously 18 November: the Dow's 849-point fall, Nvidia's
+results, the Knesset vote and the Kerch Bridge collapse move to the
+DATE CHECK box, because they were Tuesday's news. All 11 front
+stories verified live from Reuters/AP/BBC/NASA/Fed/ONS/Amnesty
+searches on 2026-11-19.
 """
 import json, os
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1024, 1024
-CREAM = (246, 241, 227)
-INK = (20, 20, 20)
+PAPER = (246, 241, 227)
+INK = (22, 22, 22)
 NAVY = (20, 35, 70)
-NAVY_D = (14, 26, 54)
-RED = (190, 30, 30)
-GREY = (110, 105, 95)
-GOLD = (200, 160, 40)
-GOLD_L = (230, 195, 90)
+NAVY_D = (13, 25, 52)
+RED = (186, 28, 28)
+GREY = (105, 100, 90)
+GOLD = (198, 158, 38)
+GOLD_L = (232, 197, 92)
 WHITE = (255, 255, 255)
-GREEN = (30, 120, 70)
-BLUE = (30, 90, 170)
-ORANGE = (210, 110, 20)
-PURPLE = (110, 60, 140)
-TEAL = (20, 130, 130)
+GREEN = (28, 118, 68)
+BLUE = (28, 88, 168)
+ORANGE = (208, 108, 18)
+PURPLE = (108, 58, 138)
+TEAL = (18, 128, 128)
+SHADOW = (214, 207, 190)
+EDGE = (198, 192, 176)
+SEA = (208, 224, 234)
+LAND = (240, 228, 200)
+DECKGREY = (62, 62, 62)
+PINK = (255, 238, 232)
 
-def F(name, size):
-    return ImageFont.truetype(name, size)
+def font(path, size):
+    return ImageFont.truetype(path, size)
 FB = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 SB = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
 SR = "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
-SI = "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
 
-img = Image.new("RGB", (W, H), CREAM)
-d = ImageDraw.Draw(img)
+canvas = Image.new("RGB", (W, H), PAPER)
+d = ImageDraw.Draw(canvas)
 
-def para(text, font, x, y, maxw, lh, fill=INK, max_lines=3):
+def wrap(text, fnt, x, y, maxw, lh, fill=INK, limit=3):
     words = text.split()
     lines, cur = [], ""
     for w_ in words:
         t = (cur + " " + w_).strip()
-        if d.textlength(t, font=font) <= maxw:
+        if d.textlength(t, font=fnt) <= maxw:
             cur = t
         else:
             if cur:
@@ -51,215 +60,258 @@ def para(text, font, x, y, maxw, lh, fill=INK, max_lines=3):
             cur = w_
     if cur:
         lines.append(cur)
-    for i, ln in enumerate(lines[:max_lines]):
-        d.text((x, y + i * lh), ln, font=font, fill=fill)
-    return y + min(len(lines), max_lines) * lh
+    for i, ln in enumerate(lines[:limit]):
+        d.text((x, y + i * lh), ln, font=fnt, fill=fill)
+    return y + min(len(lines), limit) * lh
 
-# ---------- masthead (navy band) ----------
+def _load(name):
+    here = os.path.dirname(os.path.abspath(__file__))
+    return Image.open(os.path.join(here, 'assets', name)).convert('RGB')
+
+# ---------- masthead ----------
 d.rectangle([0, 0, W, 104], fill=NAVY_D)
-d.text((14, 10), "THE DAY IN WORLD NEWS", font=F(FB, 13), fill=GOLD_L)
-r = "35 STORIES · 6 CONTINENTS · ONE PAGE"
-d.text((W - 14 - d.textlength(r, font=F(FB, 11)), 12), r, font=F(FB, 11), fill=(200, 205, 220))
-d.text((14, 28), "Wednesday 18 November 2026", font=F(SB, 52), fill=WHITE)
-d.text((14, 84), "Every story on this page happened, or was first reported, on this day.",
-       font=F(SI, 13), fill=(200, 205, 220))
+d.rectangle([14, 10, 80, 96], fill=RED)
+d.text((22, 14), "NOV", font=font(FB, 11), fill=WHITE)
+t18 = "18"
+tw = d.textlength(t18, font=font(FB, 34))
+d.text((14 + (66 - tw) / 2, 30), t18, font=font(FB, 34), fill=WHITE)
+d.text((18, 74), "WED · 2026", font=font(FB, 8), fill=WHITE)
+d.text((92, 12), "THE DAY IN WORLD NEWS", font=font(FB, 12), fill=GOLD_L)
+r = "38 STORIES · 6 CONTINENTS · ONE PAGE"
+d.text((W - 14 - d.textlength(r, font=font(FB, 11)), 12), r, font=font(FB, 11), fill=(200, 205, 220))
+d.text((92, 30), "Wednesday 18 November 2026", font=font(SB, 46), fill=WHITE)
+d.text((92, 84), "Everything on this page happened, or was first reported, on Wednesday 18 November 2026.",
+       font=font(SR, 13), fill=(200, 205, 220))
 d.rectangle([0, 104, W, 108], fill=GOLD)
 
-# ---------- hero photos (AI-generated photorealistic illustrations) ----------
-def _load(name):
-    return Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', name)).convert('RGB')
-
-HERO_PHOTOS = [_load('hero1.png'), _load('hero2.png'), _load('hero3.png')]
-SMALL_PHOTOS = [_load(n) for n in ['small2.png', 'small3.png', 'small4.png',
-                                     'small5.png', 'small-wallst.png', 'small1.png']]
-
-def ill_hero_hormuz(x, y, w, h):
-    img.paste(HERO_PHOTOS[0], (x, y))
-    d.rectangle([x, y + h - 18, x + w, y + h], fill=NAVY)
-    d.text((x + 8, y + h - 15), "SHEIKH ISA BASE · QESHM ISLAND", font=F(FB, 9), fill=WHITE)
-
-def ill_hero_bridge(x, y, w, h):
-    img.paste(HERO_PHOTOS[1], (x, y))
-    d.rectangle([x, y + h - 20, x + w, y + h], fill=NAVY)
-    d.text((x + 8, y + h - 17), "KERCH STRAIT · 19 KM CROSSING", font=F(FB, 9), fill=WHITE)
-
-def ill_hero_manila(x, y, w, h):
-    img.paste(HERO_PHOTOS[2], (x, y))
-    d.rectangle([x, y + h - 22, x + w, y + h], fill=GOLD)
-    d.text((x + 8, y + h - 18), "MANILA · FIRST QUAD IN TWO YEARS", font=F(FB, 9), fill=INK)
-
-# ---------- hero cards ----------
+# ---------- hero cards (3) ----------
 HERO = [
-    (1, "MIDDLE EAST · CONFLICT", RED, "US and Iran trade fire over Bahrain and Qeshm",
-     "US jets struck an Iranian missile site on Qeshm, US officials say, after drones targeted a US radar in Bahrain. No injuries were reported.", ill_hero_hormuz),
-    (2, "EUROPE · WAR IN UKRAINE", RED, "A span of the Crimea bridge falls into the sea",
-     "Kyiv says a second strike in two days destroyed the road span. Moscow says it downed 1,441 drones; the rail arch stands.", ill_hero_bridge),
-    (3, "ASIA · DIPLOMACY", PURPLE, "Trump meets Marcos, then flies to Shenzhen",
-     "First Quad summit in two years, then a 'very big' Philippines trade deal. A trilateral with Xi and Putin is set for Thursday.", ill_hero_manila),
+    (1, "ASIA · SUMMIT", PURPLE, "CNBC · CNN", "SHENZHEN · APEC LEADERS' WEEK",
+     "Xi welcomes Trump at Shenzhen's airport",
+     "China's leader greets Trump on the tarmac as APEC opens. A three-way session with Putin is set for Thursday.",
+     'hero7a.png'),
+    (2, "MIDDLE EAST · IRAN WAR", RED, "AL JAZEERA", "BAHRAIN · KUWAIT · THE GULF",
+     "Bahrain and Kuwait intercept Iran's drones",
+     "Gulf air defences shoot down waves of Iranian drones aimed at US sites. Tehran says it answers a US strike on Qeshm.",
+     'hero7b.png'),
+    (3, "SPACE · SCIENCE", NAVY, "NASA", "INTERSTELLAR SPACE · NASA",
+     "Voyager 1 reaches one light-day from Earth",
+     "The first human-made object to get 25.9 billion km out. A command sent today arrives tomorrow.",
+     'hero7c.png'),
 ]
-hy = 116
-for i, (num, tag, tc, head, deck, ill) in enumerate(HERO):
+HY, HH = 116, 222
+for i, (num, tag, tc, src, cap, head, deck, pic) in enumerate(HERO):
     x = 14 + i * 336
     w = 324
-    d.rectangle([x + 3, hy + 3, x + w + 3, hy + 203], fill=(215, 208, 192))
-    d.rectangle([x, hy, x + w, hy + 200], fill=WHITE, outline=(200, 195, 180))
-    ill(x + 6, hy + 6, w - 12, 96)
-    d.text((x + 10, hy + 108), f"{num}  {tag}", font=F(FB, 11), fill=tc)
-    para(head, F(SB, 19), x + 10, hy + 124, w - 20, 23, max_lines=2)
-    para(deck, F(FR, 10), x + 10, hy + 172, w - 20, 13, fill=(60, 60, 60), max_lines=2)
+    d.rectangle([x + 3, HY + 3, x + w + 3, HY + HH + 3], fill=SHADOW)
+    d.rectangle([x, HY, x + w, HY + HH], fill=WHITE, outline=EDGE)
+    canvas.paste(_load(pic), (x + 6, HY + 6))
+    d.rectangle([x + 6, HY + 110, x + w - 6, HY + 126], fill=NAVY)
+    d.text((x + 14, HY + 113), cap, font=font(FB, 9), fill=WHITE)
+    d.rectangle([x + 10, HY + 132, x + 24, HY + 146], fill=tc)
+    t = str(num)
+    tw = d.textlength(t, font=font(FB, 9))
+    d.text((x + 17 - tw / 2, HY + 134), t, font=font(FB, 9), fill=WHITE)
+    d.text((x + 28, HY + 133), tag, font=font(FB, 10), fill=tc)
+    sw = d.textlength(src, font=font(FB, 8))
+    d.text((x + w - 10 - sw, HY + 134), src, font=font(FB, 8), fill=GREY)
+    wrap(head, font(SB, 17), x + 10, HY + 150, w - 20, 21, limit=2)
+    wrap(deck, font(FR, 10), x + 10, HY + 194, w - 20, 12, fill=DECKGREY, limit=2)
 
-# ---------- medium cards (2 rows x 3) ----------
+# ---------- small cards (2 rows x 4) ----------
 SMALL = [
-    (4, "UNITED STATES · BUSINESS", GREEN, "Nvidia's revenue doubles to $115.8bn",
-     "Sales rose 103% as data-centre demand held up. Data-centre sales rose 110% and guidance was raised.", SMALL_PHOTOS[0]),
-    (5, "ISRAEL · POLITICS", NAVY, "Knesset elects Kahana as speaker, 66-52",
-     "Kahana, an ally of Gadi Eisenkot, replaces Amir Ohana after a seven-hour debate. Arab parties' votes proved decisive.", SMALL_PHOTOS[1]),
-    (6, "EUROPE · UKRAINE", BLUE, "EU proposes a €45bn loan for Ukraine",
-     "The loan would cover about two-thirds of Kyiv's 2027 gap and be repaid only if Russia pays reparations.", SMALL_PHOTOS[2]),
-    (7, "SOUTH ASIA · WEATHER", TEAL, "Cyclone Akvan bears down on Andhra Pradesh",
-     "The storm is forecast to make landfall on Friday with gusts to 145 km/h. Odisha is moving 200,000 people from the coast.", SMALL_PHOTOS[3]),
-    (8, "UNITED STATES · MARKETS", RED, "Wall Street slides as the Dow drops 849 points",
-     "The S&P 500 closed at its lowest since July in a fourth straight fall. Reports of an NSA outage weighed on shares.", SMALL_PHOTOS[4]),
-    (9, "CHINA · SUMMIT", NAVY, "APEC opens in Shenzhen with Xi keynote",
-     "Leaders of 21 Pacific economies meet today and tomorrow. Trump and South Korea's Lee arrive for the sessions.", SMALL_PHOTOS[5]),
+    (4, "EUROPE · UKRAINE WAR", RED, "AIR FORCE",
+     "Russia fires 141 drones at Ukraine; 126 downed",
+     "Air defences down or jam 126 of 141 drones. Hits are recorded at seven sites.",
+     's7-4.png'),
+    (5, "AMERICAS · MARKETS", GREEN, "FED · AP",
+     "Fed minutes: almost all officials see more hikes",
+     "A 10–2 vote to hold at 3.75–4%. Almost all see more hikes ahead.",
+     's7-5.png'),
+    (6, "ASIA · WEATHER", TEAL, "IMD",
+     "Cyclone Akvan veers north toward Odisha",
+     "Landfall due Friday, gusts to 145 km/h. Odisha moves 200,000 off the coast.",
+     's7-6.png'),
+    (7, "AFRICA · SUDAN WAR", ORANGE, "AMNESTY",
+     "Amnesty: RSF drones killed 37 in El Obeid",
+     "Nine strikes killed 37 civilians, Amnesty says. It urges a war-crimes inquiry.",
+     's7-7.png'),
+    (8, "EUROPE · UKRAINE AID", BLUE, "EU",
+     "EU proposes a €45bn loan for Ukraine",
+     "Two-thirds of a €70bn gap for 2027, repaid only once Russia pays reparations.",
+     's7-8.png'),
+    (9, "EUROPE · ECONOMY", NAVY, "ONS",
+     "UK inflation climbs to 3.6%, a one-year high",
+     "Fuel prices and an earlier tobacco tax rise pushed October CPI up from 3.5%.",
+     's7-9.png'),
+    (10, "MIDDLE EAST · GAZA", RED, "REUTERS",
+     "Israeli tanks roll into central Gaza",
+     "First push past the Yellow Line near Nuseirat; Hamas calls it a breach.",
+     's7-10.png'),
+    (11, "AMERICAS · US POLITICS", PURPLE, "NPR · CBS",
+     "Jeffries wins Democrats' nod for House Speaker",
+     "A 251–11 caucus vote puts him on course to be the first Black Speaker in January.",
+     's7-11.png'),
 ]
 for r in range(2):
-    for c in range(3):
-        num, tag, tc, head, deck, photo = SMALL[r * 3 + c]
-        x = 14 + c * 336
-        y = 326 + r * 184
-        w = 324
-        d.rectangle([x + 3, y + 3, x + w + 3, y + 179], fill=(215, 208, 192))
-        d.rectangle([x, y, x + w, y + 176], fill=WHITE, outline=(200, 195, 180))
-        img.paste(photo, (x + 6, y + 6))
-        d.text((x + 10, y + 76), f"{num}  {tag}", font=F(FB, 11), fill=tc)
-        para(head, F(SB, 17), x + 10, y + 92, w - 20, 21, max_lines=2)
-        para(deck, F(FR, 10), x + 10, y + 136, w - 20, 13, fill=(60, 60, 60), max_lines=3)
+    for c in range(4):
+        num, tag, tc, src, head, deck, pic = SMALL[r * 4 + c]
+        x = 14 + c * 252
+        y = 346 + r * 208
+        w = 240
+        d.rectangle([x + 3, y + 3, x + w + 3, y + 203], fill=SHADOW)
+        d.rectangle([x, y, x + w, y + 200], fill=WHITE, outline=EDGE)
+        canvas.paste(_load(pic), (x + 6, y + 6))
+        d.rectangle([x + 10, y + 112, x + 23, y + 125], fill=tc)
+        t = str(num)
+        tw = d.textlength(t, font=font(FB, 9))
+        d.text((x + 16 - tw / 2, y + 114), t, font=font(FB, 9), fill=WHITE)
+        d.text((x + 27, y + 113), tag, font=font(FB, 10), fill=tc)
+        sw = d.textlength(src, font=font(FB, 8))
+        d.text((x + w - 10 - sw, y + 114), src, font=font(FB, 8), fill=GREY)
+        wrap(head, font(SB, 16), x + 10, y + 130, w - 20, 20, limit=2)
+        wrap(deck, font(FR, 10), x + 10, y + 172, w - 20, 12, fill=DECKGREY, limit=2)
 
-# ---------- by the numbers ----------
-d.rectangle([14, 702, 1010, 748], fill=NAVY_D)
-d.text((24, 712), "BY THE NUMBERS", font=F(FB, 12), fill=GOLD_L)
-NUMS = [
-    ("66–52", "Kahana's winning margin for speaker"),
-    ("$115.8bn", "Nvidia's quarterly revenue, up 103%"),
-    ("145 km/h", "Akvan's forecast gusts at landfall"),
-    ("200,000", "People Odisha is moving from the coast"),
-]
-nx = 200
-for val, cap in NUMS:
-    d.text((nx, 710), val, font=F(SB, 22), fill=WHITE)
-    d.text((nx, 734), cap, font=F(FR, 9), fill=(200, 205, 220))
-    nx += 205
-
-# ---------- map + also strip ----------
-d.text((14, 762), "WHERE IT HAPPENED", font=F(FB, 11), fill=RED)
-d.text((350, 762), "ALSO ON WEDNESDAY 18 NOVEMBER", font=F(FB, 11), fill=RED)
-d.text((W - 14 - d.textlength("26 MORE STORIES", font=F(FB, 11)), 762), "26 MORE STORIES", font=F(FB, 11), fill=GREY)
+# ---------- bottom band ----------
+d.text((14, 762), "WHERE IT HAPPENED", font=font(FB, 11), fill=RED)
+d.text((350, 762), "ALSO ON WEDNESDAY 18 NOVEMBER", font=font(FB, 11), fill=RED)
+d.text((W - 14 - d.textlength("27 MORE STORIES", font=font(FB, 11)), 762), "27 MORE STORIES", font=font(FB, 11), fill=GREY)
 
 with open("world.geo.json") as fh:
     geo = json.load(fh)
 
 def _proj(lon, lat):
-    mx, my, mw, mh = 14, 780, 320, 180
+    mx, my, mw, mh = 14, 778, 320, 140
     px = mx + (lon + 180) / 360 * mw
     py = my + (90 - lat) / 180 * mh
     return px, py
 
-d.rectangle([14, 780, 334, 960], fill=(210, 225, 235))
+d.rectangle([14, 778, 334, 918], fill=SEA)
 for feat in geo["features"]:
     g = feat["geometry"]
     polys = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
     for poly in polys:
         for ring in poly:
             pts = [_proj(lon, lat) for lon, lat in ring]
-            d.polygon(pts, fill=(240, 228, 200), outline=(255, 255, 255))
+            d.polygon(pts, fill=LAND, outline=WHITE)
 
-REG_COLORS = {"Americas": RED, "Europe": BLUE, "Middle East": ORANGE,
-              "Asia": PURPLE, "Africa": GREEN, "Oceania": TEAL, "Global": (90, 90, 90)}
+REGION = {"Americas": RED, "Europe": BLUE, "Middle East": ORANGE,
+          "Asia": PURPLE, "Africa": GREEN, "Oceania": TEAL, "Global": (90, 90, 90)}
 PINS = [
-    (1, "Middle East", 56.3, 26.5), (2, "Europe", 33.5, 45.3), (3, "Asia", 121.0, 14.6),
-    (4, "Americas", -122.4, 37.4), (5, "Middle East", 35.2, 31.8), (6, "Europe", 4.35, 50.85),
-    (7, "Asia", 80.3, 16.5), (8, "Americas", -74.0, 40.7), (9, "Asia", 114.1, 22.5),
+    (1, "Asia", 114.1, 22.5), (2, "Middle East", 50.6, 26.2),
+    (4, "Europe", 30.5, 50.4), (5, "Americas", -77.0, 38.9),
+    (6, "Asia", 85.8, 19.8), (7, "Africa", 30.2, 13.2),
+    (8, "Europe", 4.35, 50.85), (9, "Europe", -0.1, 51.5),
+    (10, "Middle East", 34.4, 31.4), (11, "Americas", -74.0, 40.7),
 ]
 DOTS = [
-    (10, "Middle East", 34.5, 31.5), (11, "Oceania", 147.0, -6.7), (12, "Asia", 77.2, 28.6),
-    (13, "Americas", -98.0, 39.0), (14, "Asia", 100.5, 13.8), (15, "Global", 12.5, 41.9),
-    (16, "Oceania", -160.0, -21.0), (17, "Europe", 2.3, 48.9), (18, "Middle East", 35.2, 31.8),
-    (19, "Europe", 10.0, 51.0), (20, "Middle East", 44.4, 33.3), (21, "Asia", 101.7, 3.1),
-    (22, "Americas", -98.0, 39.0), (23, "Americas", -122.4, 37.8), (24, "Africa", 3.4, 6.5),
-    (25, "Asia", 77.2, 28.6), (26, "Global", 30.7, 36.9), (27, "Africa", 3.4, 6.5),
-    (28, "Middle East", 56.3, 26.5), (29, "Americas", -122.4, 37.8), (30, "Asia", 116.4, 39.9),
-    (31, "Europe", 30.5, 50.4), (32, "Middle East", 34.5, 31.5), (33, "Africa", 23.0, -2.0),
-    (34, "Middle East", 56.3, 26.5), (35, "Africa", 3.4, 6.5),
+    (12, "Middle East", 34.5, 31.5), (13, "Oceania", 147.0, -6.7),
+    (14, "Asia", 77.2, 28.6), (15, "Americas", -98.0, 39.0),
+    (16, "Asia", 100.5, 13.8), (17, "Europe", 4.3, 52.1),
+    (18, "Oceania", -160.0, -21.0), (19, "Europe", 2.3, 48.9),
+    (20, "Middle East", 35.2, 31.8), (21, "Global", 12.5, 41.9),
+    (22, "Americas", -66.9, 10.5), (23, "Asia", 101.7, 3.1),
+    (24, "Americas", -122.4, 37.8), (25, "Africa", -17.4, 14.7),
+    (26, "Asia", 78.5, 27.0), (27, "Europe", 32.0, 36.5),
+    (28, "Africa", 3.4, 6.5), (29, "Middle East", 56.3, 26.5),
+    (30, "Americas", -121.0, 38.5), (31, "Asia", 116.4, 39.9),
+    (32, "Europe", 30.5, 50.4), (33, "Middle East", 34.0, 31.0),
+    (34, "Africa", 23.0, -2.0), (35, "Africa", -7.6, 33.6),
+    (36, "Oceania", 174.8, -41.3), (37, "Europe", 29.5, 37.2),
+    (38, "Europe", 7.4, 46.9),
 ]
 for num, region, lon, lat in DOTS:
     px, py = _proj(lon, lat)
-    d.ellipse([px - 3, py - 3, px + 3, py + 3], fill=REG_COLORS[region])
+    d.ellipse([px - 3, py - 3, px + 3, py + 3], fill=REGION[region])
 for num, region, lon, lat in PINS:
     px, py = _proj(lon, lat)
-    c = REG_COLORS[region]
+    c = REGION[region]
     d.ellipse([px - 8, py - 8, px + 8, py + 8], fill=c, outline=WHITE, width=2)
     t = str(num)
-    tw = d.textlength(t, font=F(FB, 8))
-    d.text((px - tw / 2, py - 6), t, font=F(FB, 8), fill=WHITE)
+    tw = d.textlength(t, font=font(FB, 8))
+    d.text((px - tw / 2, py - 6), t, font=font(FB, 8), fill=WHITE)
+vx, vy = _proj(-170.0, -60.0)
+d.ellipse([vx - 7, vy - 7, vx + 7, vy + 7], fill=(90, 90, 90), outline=WHITE, width=2)
+d.text((vx - 2, vy - 6), "3", font=font(FB, 8), fill=WHITE)
+d.text((vx + 10, vy - 5), "to Voyager 1", font=font(FR, 8), fill=GREY)
 
-also = [
-    (10, "Gaza", "cold kills in tents; four nations call for aid access"),
-    (11, "Quakes", "M6.0 Papua New Guinea; M5.9 Flores, Indonesia"),
-    (12, "Dhoni", "retires from the IPL after a 19-year career"),
-    (13, "Measles", "US loses status held since 2000"),
-    (14, "Thailand", "seeks a US tariff cut to 10%"),
-    (15, "World Court", "to rule on the Myanmar genocide case"),
-    (16, "Cyclone Xavier", "Category 5 hits Northern Cook Islands"),
-    (17, "France", "fourth weekend of protests over living costs"),
-    (18, "Eisenkot", "Herzog asks him to try to form a government"),
-    (19, "Freezer hack", "cyber-attack hits shops in seven countries"),
-    (20, "Venezuela oil", "US details $12bn in revenue"),
-    (21, "Malaysia", "eases rare-earth curbs for France"),
-    (22, "NSA", "network down in maintenance; no hack seen"),
-    (23, "Apple", "Pay, iCloud and App Store outage"),
-    (24, "Senegal", "first team into AFCON 2027"),
-    (25, "SAFF final", "India beat Pakistan 2-1, 10th title"),
-    (26, "COP31", "$20m plan for heat and cooling"),
-    (27, "Nigeria", "Obasanjo criticises Tinubu over subsidy"),
-    (28, "Hormuz mines", "tanker hit; 1 missing, 11 hurt"),
-    (29, "San Francisco", "data-centre moratorium extended 10 months"),
-    (30, "China-Canada", "tariff cuts on pork and seafood"),
-    (31, "Kyiv", "US scolds it over deep strikes; talks go on"),
-    (32, "Gaza", "NGO: 1,100 child amputees blocked from care"),
-    (33, "Ebola", "DRC: WHO counts 11,000 cases, 5,400 dead"),
-    (34, "Bahrain", "intercepts a second Iranian drone attack"),
-    (35, "Morocco", "beat Niger 1-0 to reach AFCON 2027"),
+# four big numbers under the map
+STATS = [
+    ("25.9bn km", "Voyager 1, one light-day out"),
+    ("251–11", "Jeffries' vote for Speaker"),
+    ("141", "Drones fired at Ukraine"),
+    ("200,000", "Odisha moves off the coast"),
 ]
-REG_OF = {n: r for n, r, _, _ in [(n, REG_COLORS[reg], lo, la) for n, reg, lo, la in DOTS]}
-for ci, col in enumerate([also[0:13], also[13:26]]):
-    x = 350 + ci * 340
-    y = 780
-    for num, region, head in col:
-        c = REG_OF[num]
-        d.ellipse([x, y, x + 14, y + 14], fill=c)
-        t = str(num)
-        tw = d.textlength(t, font=F(FB, 8))
-        d.text((x + 7 - tw / 2, y + 3), t, font=F(FB, 8), fill=WHITE)
-        d.text((x + 18, y + 1), f"{region}: ", font=F(FB, 10), fill=GREY)
-        rw = d.textlength(f"{region}: ", font=F(FB, 10))
-        d.text((x + 18 + rw, y + 1), head, font=F(FR, 10), fill=NAVY)
-        y += 14
+for i, (val, cap) in enumerate(STATS):
+    sx = 14 + (i % 2) * 162
+    sy = 922 + (i // 2) * 30
+    d.text((sx, sy), val, font=font(SB, 17), fill=NAVY)
+    d.text((sx, sy + 18), cap, font=font(FR, 8), fill=GREY)
 
-# legend + footer
+# map legend
 lx = 14
 for name, c in [("Americas", RED), ("Europe", BLUE), ("Middle East", ORANGE),
                 ("Asia", PURPLE), ("Africa", GREEN), ("Oceania", TEAL)]:
-    d.ellipse([lx, 966, lx + 8, 974], fill=c)
-    d.text((lx + 11, 964), name, font=F(FR, 9), fill=INK)
-    lx += 11 + d.textlength(name, font=F(FR, 9)) + 12
-d.text((14, 980), "Pins: stories 1-9 · dots: 10-35", font=F(FR, 9), fill=GREY)
-d.text((14, 994), "Every story here happened or was first reported on Wednesday 18 November 2026. Contested claims are marked as claims.",
-       font=F(FR, 9), fill=GREY)
-d.text((14, 1008), "Sources: Reuters, AP, AFP, BBC, Al Jazeera, WHO, UN. Original illustrations.",
-       font=F(FR, 9), fill=GREY)
+    d.ellipse([lx, 986, lx + 8, 994], fill=c)
+    d.text((lx + 11, 984), name, font=font(FR, 8), fill=INK)
+    lx += 11 + d.textlength(name, font=font(FR, 8)) + 10
 
-img.save("entry.png")
-print("saved entry.png", img.size)
-import os
+# also list 12-38
+ALSO = [
+    (12, "Gaza", "Middle East", "cold kills in tents; four nations seek aid access"),
+    (13, "Quakes", "Oceania", "M6.0 Papua New Guinea; M5.9 Flores, Indonesia"),
+    (14, "Dhoni", "Asia", "retires from the IPL after a 19-year career"),
+    (15, "Measles", "Americas", "US loses status held since 2000"),
+    (16, "Thailand", "Asia", "seeks a US tariff cut to 10%"),
+    (17, "World Court", "Europe", "to rule on the Myanmar genocide case"),
+    (18, "Cyclone Xavier", "Oceania", "Category 5 hits Northern Cook Islands"),
+    (19, "France", "Europe", "fourth weekend of protests over living costs"),
+    (20, "Eisenkot", "Middle East", "Herzog asks him to try to form a government"),
+    (21, "Freezer hack", "Global", "cyber-attack hits shops in seven countries"),
+    (22, "Venezuela oil", "Americas", "US details $12bn in revenue"),
+    (23, "Malaysia", "Asia", "eases rare-earth curbs for France"),
+    (24, "Apple", "Americas", "Pay, iCloud and App Store outage"),
+    (25, "Senegal", "Africa", "first team into AFCON 2027"),
+    (26, "SAFF final", "Asia", "India beat Pakistan 2-1, 10th title"),
+    (27, "COP31", "Europe", "$20m plan for heat and cooling"),
+    (28, "Nigeria", "Africa", "Obasanjo criticises Tinubu over subsidy"),
+    (29, "Hormuz mines", "Middle East", "tanker hit; 1 missing, 11 hurt"),
+    (30, "San Francisco", "Americas", "data-centre moratorium extended 10 months"),
+    (31, "China-Canada", "Asia", "tariff cuts on pork and seafood"),
+    (32, "Kyiv", "Europe", "US scolds it over deep strikes; talks go on"),
+    (33, "Gaza", "Middle East", "NGO: 1,100 child amputees blocked from care"),
+    (34, "Ebola", "Africa", "DRC: WHO counts 11,000 cases, 5,400 dead"),
+    (35, "Morocco", "Africa", "beat Niger 1-0 to reach AFCON 2027"),
+    (36, "GTA VI", "Oceania", "goes on sale, with New Zealand first"),
+    (37, "COP31", "Europe", "ministers weigh a divided draft in Antalya"),
+    (38, "FIFA", "Europe", "France's Diallo to challenge Infantino"),
+]
+for ci, col in enumerate([ALSO[0:14], ALSO[14:27]]):
+    x = 350 + ci * 332
+    y = 778
+    for num, label, region, head in col:
+        c = REGION[region]
+        d.ellipse([x, y, x + 13, y + 13], fill=c)
+        t = str(num)
+        tw = d.textlength(t, font=font(FB, 8))
+        d.text((x + 6 - tw / 2, y + 2), t, font=font(FB, 8), fill=WHITE)
+        d.text((x + 17, y + 1), f"{label}: ", font=font(FB, 10), fill=GREY)
+        rw = d.textlength(f"{label}: ", font=font(FB, 10))
+        d.text((x + 17 + rw, y + 1), head, font=font(FR, 10), fill=NAVY)
+        y += 13
+
+# date check: Tuesday's news, named as left out
+d.rectangle([350, 962, 1010, 1004], fill=PINK, outline=RED, width=1)
+d.text((358, 968), "DATE CHECK", font=font(FB, 10), fill=RED)
+d.text((358, 982), "Left out as Tuesday 17 November news: Nvidia's results · the Dow's 849-point fall · the Knesset speaker vote ·",
+       font=font(FR, 9), fill=INK)
+d.text((358, 993), "the Kerch Bridge collapse · the Board of Peace's Gaza report · Mongolia's president's offer to quit.",
+       font=font(FR, 9), fill=INK)
+
+# footer
+d.text((14, 1010), "All 38 stories happened, or were first reported, on Wednesday 18 November 2026. Pins 1–11, dots 12–38. Sources: AP · Reuters · AFP · CNN · CNBC · NPR · Fed · ONS · IMD · NASA · Amnesty. Original illustrations.",
+       font=font(FR, 9), fill=GREY)
+
+canvas.save("entry.png")
+print("saved entry.png", canvas.size)
 print("bytes", os.path.getsize("entry.png"))

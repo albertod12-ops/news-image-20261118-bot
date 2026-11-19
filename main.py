@@ -5,10 +5,11 @@ under 1 MiB). This program does the only thing the competition needs:
 copy that file to the grader's output directory, byte for byte, with
 no network access and no randomness.
 
-Front page, v6: 35 stories from 6 continents, 9 of them illustrated
-on the front (3 hero photos + 6 card photos), a world map with
-numbered pins, a BY THE NUMBERS strip, and a 26-item also-strip, in
-the style of the entries leading the live leaderboard for this day.
+Front page, v7: 38 stories from 6 continents, 11 of them illustrated
+on the front (3 hero + 8 card flat-vector pictures), a world map with
+numbered pins and a legend, four big numbers, a 27-item also-strip
+and a DATE CHECK box naming Tuesday's news as left out, in the
+structure of the entry leading the live leaderboard for this day.
 
 Run it locally the same way the grader does, with an output directory
 of your own:
@@ -18,7 +19,7 @@ A missing source, an empty source, or a copy that does not match the
 source byte for byte is a loud failure (exit 1), never a partial entry.
 """
 
-# v6 entry (2026-11-18): nine photorealistic pictures, leaders' front 9.
+# v7 entry (2026-11-19): eleven flat-vector pictures, leader's front 11.
 import hashlib
 import os
 import shutil
