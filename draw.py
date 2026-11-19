@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v8: 46 stories, UTC timeline, region strip, in-art labels.
+"""news-image-20261118 v9: 46 stories, UTC timeline, region strip, big in-art text.
 Draws entry.png (1024x1024, deterministic) from assets/ + world.geo.json.
 Run: python3 draw.py  -> writes entry.png in this directory."""
 import json
@@ -39,6 +39,10 @@ F_HEAD_S = font("DejaVuSerif-Bold.ttf", 15)
 F_DECK = font("DejaVuSans.ttf", 11)
 F_DECK_S = font("DejaVuSans.ttf", 10)
 F_LABEL = font("DejaVuSans-Bold.ttf", 11)
+F_ART = font("DejaVuSans-Bold.ttf", 24)
+F_ART_S = font("DejaVuSans-Bold.ttf", 12)
+F_ART2 = font("DejaVuSans-Bold.ttf", 17)
+F_ART2_S = font("DejaVuSans-Bold.ttf", 11)
 F_ALSO = font("DejaVuSans.ttf", 11)
 F_ALSO_N = font("DejaVuSans-Bold.ttf", 11)
 F_SEC = font("DejaVuSans-Bold.ttf", 12)
@@ -68,52 +72,52 @@ TIMELINE = [
     ("21:00 UTC", "Wall Street: Dow down 1.1%"),
 ]
 
-# num, region, topic, source, headline, deck, in-art label, image
+# num, region, topic, source, headline, deck, in-art big, in-art small, image
 FRONT = [
     (1, "ASIA", "SUMMIT", "CNBC \u00b7 CNN",
      "Xi greets Trump as APEC opens",
      "Shenzhen airport welcome; three-way session with Putin set for Thursday.",
-     "APEC OPENS", "hero7a.png"),
+     "XI \u00b7 TRUMP \u00b7 PUTIN", "3-WAY TALKS \u00b7 THU 19", "hero7a.png"),
     (2, "MIDDLE EAST", "IRAN WAR", "AL JAZEERA",
      "Gulf states down Iranian drones",
      "Bahrain, Kuwait intercept; Tehran calls it answer to US strike on Qeshm.",
-     "INTERCEPTED", "hero7b.png"),
+     "INTERCEPTED", "KUWAIT \u00b7 BAHRAIN", "hero7b.png"),
     (3, "SPACE", "SCIENCE", "NASA",
      "Voyager 1 reaches one light-day",
      "25.9 billion km out; a command sent today arrives tomorrow.",
-     "ONE LIGHT-DAY", "hero7c.png"),
+     "1 LIGHT-DAY", "25.9 BILLION KM", "hero7c.png"),
     (4, "EUROPE", "UKRAINE WAR", "AIR FORCE",
      "Russia fires 141 drones at Ukraine",
      "Air defences down 126 of 141; strikes land at seven sites.",
-     "141 FIRED / 126 DOWNED", "s7-4.png"),
+     "141 FIRED", "126 DOWNED", "s7-4.png"),
     (5, "AMERICAS", "MARKETS", "FED \u00b7 AP",
      "Fed minutes point to more hikes",
      "October 27\u201328 minutes: almost all officials see further tightening; 10\u20132 hold.",
-     "MORE HIKES", "s7-5.png"),
+     "MORE HIKES", "DOW \u22121.1%", "s7-5.png"),
     (6, "ASIA", "WEATHER", "IMD",
      "Cyclone Akvan bears down on Odisha",
      "Landfall Friday; 145 km/h gusts; 200,000 moved off the coast.",
-     "200,000 MOVED", "s7-6.png"),
+     "200,000 MOVED", "ODISHA \u00b7 FRI 20 NOV", "s7-6.png"),
     (7, "AFRICA", "SUDAN WAR", "AMNESTY",
      "Amnesty: RSF drones killed 37",
      "Nine strikes in El Obeid, June to August; war-crimes inquiry urged.",
-     "37 KILLED", "s7-7.png"),
+     "37 KILLED", "EL OBEID", "s7-7.png"),
     (8, "EUROPE", "UKRAINE AID", "EU",
      "EU proposes \u20ac45bn loan to Kyiv",
      "For 2027; repayment only if Russia pays reparations.",
-     "\u20ac45 BILLION", "s7-8.png"),
+     "\u20ac45 BILLION", "LOAN \u00b7 2027", "s7-8.png"),
     (9, "MIDDLE EAST", "GAZA", "REUTERS",
      "Israeli tanks push past Yellow Line",
      "First drive into central Gaza near Nuseirat; tunnel found; three killed.",
-     "PAST YELLOW LINE", "s7-9.png"),
+     "YELLOW LINE", "NUSEIRAT \u00b7 CENTRAL GAZA", "s7-9.png"),
     (10, "AMERICAS", "US POLITICS", "NPR \u00b7 CBS",
      "Jeffries wins Democrats' speaker nod",
      "Caucus vote 251\u201311; floor vote set for January 3.",
-     "251\u201311", "s7-10.png"),
+     "251\u201311", "JEFFRIES FOR SPEAKER", "s7-10.png"),
     (11, "GLOBAL", "CULTURE", "ROCKSTAR",
      "GTA VI goes on sale after 13 years",
      "Thirteen-year wait ends; midnight launch, New Zealand first at 11:00 UTC.",
-     "13-YEAR WAIT", "s8-11.png"),
+     "GTA VI", "ON SALE AFTER 13 YEARS", "s8-11.png"),
 ]
 
 # num, city, text
@@ -227,6 +231,24 @@ def pill(d, x, y, text, fg=INK, bg=YELLOW, fnt=F_LABEL, pad=4):
     return w, h
 
 
+def art_text(img, d, x, y, w, h, big, small, f_big, f_small):
+    """Big short text inside the art, rstrike-style: white bold on a dark scrim."""
+    bw = int(d.textlength(big, font=f_big))
+    sw = int(d.textlength(small, font=f_small)) if small else 0
+    tw = max(bw, sw)
+    bh = f_big.size + f_small.size + 10
+    ox = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    od = ImageDraw.Draw(ox)
+    od.rounded_rectangle([x + 4, y + h - bh - 4, x + 4 + tw + 12, y + h - 4],
+                         radius=3, fill=(0, 0, 0, 115))
+    img.paste(ox, (0, 0), ox)
+    d.text((x + 10, y + h - bh), big, font=f_big, fill="white",
+           stroke_width=1, stroke_fill=(0, 0, 0))
+    if small:
+        d.text((x + 10, y + h - bh + f_big.size + 2), small, font=f_small,
+               fill="white", stroke_width=1, stroke_fill=(0, 0, 0))
+
+
 # pixel nudges so clustered pins stay readable (map is small)
 PIN_OFF = {2: (-8, -8), 4: (8, -10), 5: (-8, 4), 8: (-10, -6), 9: (10, 10),
            10: (16, -10)}
@@ -323,11 +345,11 @@ def main():
     # ---- heroes 160-342 ----
     hy = 160
     hw = 328
-    for i, (num, reg, topic, src, head, deck, label, fn) in enumerate(FRONT[:3]):
+    for i, (num, reg, topic, src, head, deck, big, small, fn) in enumerate(FRONT[:3]):
         cx = 12 + i * (hw + 8)
         im = cover(Image.open(os.path.join(A, fn)).convert("RGB"), hw, 96)
         img.paste(im, (cx, hy))
-        pill(d, cx + 5, hy + 5, label)
+        art_text(img, d, cx, hy, hw, 96, big, small, F_ART, F_ART_S)
         d.rectangle([cx, hy + 96, cx + hw, hy + 112], fill=NAVY)
         d.text((cx + 5, hy + 100), "%d  %s \u00b7 %s" % (num, reg, topic),
                font=F_KICK, fill="white")
@@ -346,12 +368,12 @@ def main():
     for r in range(2):
         for c in range(4):
             k = 3 + r * 4 + c
-            num, reg, topic, src, head, deck, label, fn = FRONT[k]
+            num, reg, topic, src, head, deck, big, small, fn = FRONT[k]
             cx = 12 + c * (sw_ + 8)
             cy = 348 + r * 166
             im = cover(Image.open(os.path.join(A, fn)).convert("RGB"), sw_, 84)
             img.paste(im, (cx, cy))
-            pill(d, cx + 4, cy + 4, label)
+            art_text(img, d, cx, cy, sw_, 84, big, small, F_ART2, F_ART2_S)
             d.rectangle([cx, cy + 84, cx + sw_, cy + 99], fill=NAVY)
             d.text((cx + 4, cy + 87), "%d  %s \u00b7 %s" % (num, reg, topic),
                    font=F_KICK, fill="white")
