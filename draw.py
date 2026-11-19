@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v9: 46 stories, UTC timeline, region strip, big in-art text.
+"""news-image-20261118 v10: 46 stories, UTC timeline, region strip, small in-art tags.
 Draws entry.png (1024x1024, deterministic) from assets/ + world.geo.json.
 Run: python3 draw.py  -> writes entry.png in this directory."""
 import json
@@ -43,6 +43,10 @@ F_ART = font("DejaVuSans-Bold.ttf", 24)
 F_ART_S = font("DejaVuSans-Bold.ttf", 12)
 F_ART2 = font("DejaVuSans-Bold.ttf", 17)
 F_ART2_S = font("DejaVuSans-Bold.ttf", 11)
+F_FOC = font("DejaVuSans-Bold.ttf", 30)
+F_FOC_S = font("DejaVuSans-Bold.ttf", 12)
+F_FOC2 = font("DejaVuSans-Bold.ttf", 28)
+F_FOC2_S = font("DejaVuSans-Bold.ttf", 11)
 F_ALSO = font("DejaVuSans.ttf", 11)
 F_ALSO_N = font("DejaVuSans-Bold.ttf", 11)
 F_SEC = font("DejaVuSans-Bold.ttf", 12)
@@ -72,52 +76,52 @@ TIMELINE = [
     ("21:00 UTC", "Wall Street: Dow down 1.1%"),
 ]
 
-# num, region, topic, source, headline, deck, in-art big, in-art small, image
+# num, region, topic, source, headline, deck, small tag, focal (big, small, color, center) or None, image
 FRONT = [
     (1, "ASIA", "SUMMIT", "CNBC \u00b7 CNN",
      "Xi greets Trump as APEC opens",
      "Shenzhen airport welcome; three-way session with Putin set for Thursday.",
-     "XI \u00b7 TRUMP \u00b7 PUTIN", "3-WAY TALKS \u00b7 THU 19", "hero7a.png"),
+     "XI \u00b7 TRUMP \u00b7 PUTIN / 3-WAY TALKS \u00b7 THU 19", None, "hero7a.png"),
     (2, "MIDDLE EAST", "IRAN WAR", "AL JAZEERA",
      "Gulf states down Iranian drones",
      "Bahrain, Kuwait intercept; Tehran calls it answer to US strike on Qeshm.",
-     "INTERCEPTED", "KUWAIT \u00b7 BAHRAIN", "hero7b.png"),
+     "INTERCEPTED / KUWAIT \u00b7 BAHRAIN", None, "hero7b.png"),
     (3, "SPACE", "SCIENCE", "NASA",
      "Voyager 1 reaches one light-day",
      "25.9 billion km out; a command sent today arrives tomorrow.",
-     "1 LIGHT-DAY", "25.9 BILLION KM", "hero7c.png"),
+     "", ("1 LIGHT-DAY", "25.9 BILLION KM", "YELLOW", True), "hero7c.png"),
     (4, "EUROPE", "UKRAINE WAR", "AIR FORCE",
      "Russia fires 141 drones at Ukraine",
      "Air defences down 126 of 141; strikes land at seven sites.",
-     "141 FIRED", "126 DOWNED", "s7-4.png"),
+     "141 FIRED / 126 DOWNED", None, "s7-4.png"),
     (5, "AMERICAS", "MARKETS", "FED \u00b7 AP",
      "Fed minutes point to more hikes",
      "October 27\u201328 minutes: almost all officials see further tightening; 10\u20132 hold.",
-     "MORE HIKES", "DOW \u22121.1%", "s7-5.png"),
+     "MORE HIKES / DOW \u22121.1%", None, "s7-5.png"),
     (6, "ASIA", "WEATHER", "IMD",
      "Cyclone Akvan bears down on Odisha",
      "Landfall Friday; 145 km/h gusts; 200,000 moved off the coast.",
-     "200,000 MOVED", "ODISHA \u00b7 FRI 20 NOV", "s7-6.png"),
+     "200,000 MOVED / ODISHA \u00b7 FRI 20 NOV", None, "s7-6.png"),
     (7, "AFRICA", "SUDAN WAR", "AMNESTY",
      "Amnesty: RSF drones killed 37",
      "Nine strikes in El Obeid, June to August; war-crimes inquiry urged.",
-     "37 KILLED", "EL OBEID", "s7-7.png"),
+     "37 KILLED / EL OBEID", None, "s7-7.png"),
     (8, "EUROPE", "UKRAINE AID", "EU",
      "EU proposes \u20ac45bn loan to Kyiv",
      "For 2027; repayment only if Russia pays reparations.",
-     "\u20ac45 BILLION", "LOAN \u00b7 2027", "s7-8.png"),
+     "\u20ac45 BILLION / LOAN \u00b7 2027", None, "s7-8.png"),
     (9, "MIDDLE EAST", "GAZA", "REUTERS",
      "Israeli tanks push past Yellow Line",
      "First drive into central Gaza near Nuseirat; tunnel found; three killed.",
-     "YELLOW LINE", "NUSEIRAT \u00b7 CENTRAL GAZA", "s7-9.png"),
+     "YELLOW LINE / NUSEIRAT \u00b7 CENTRAL GAZA", None, "s7-9.png"),
     (10, "AMERICAS", "US POLITICS", "NPR \u00b7 CBS",
      "Jeffries wins Democrats' speaker nod",
      "Caucus vote 251\u201311; floor vote set for January 3.",
-     "251\u201311", "JEFFRIES FOR SPEAKER", "s7-10.png"),
+     "", ("251\u201311", "JEFFRIES FOR SPEAKER", "NAVY", False), "s7-10.png"),
     (11, "GLOBAL", "CULTURE", "ROCKSTAR",
      "GTA VI goes on sale after 13 years",
      "Thirteen-year wait ends; midnight launch, New Zealand first at 11:00 UTC.",
-     "GTA VI", "ON SALE AFTER 13 YEARS", "s8-11.png"),
+     "", ("GTA VI", "ON SALE AFTER 13 YEARS", "WHITE", False), "s8-11.png"),
 ]
 
 # num, city, text
@@ -249,6 +253,28 @@ def art_text(img, d, x, y, w, h, big, small, f_big, f_small):
                fill="white", stroke_width=1, stroke_fill=(0, 0, 0))
 
 
+def focal_text(d, x, y, w, h, big, small, f_big, f_small, color, center):
+    """One focal line + one small line, rstrike-style: big only where the art
+    is built around it (dark space, pale map, dark photo)."""
+    col = {"YELLOW": YELLOW, "NAVY": NAVY, "WHITE": "white"}[color]
+    small_col = "white" if color != "NAVY" else NAVY
+    stroke = 0 if color == "NAVY" else 1
+    if center:
+        bx = x + (w - d.textlength(big, font=f_big)) / 2
+        sx = x + (w - d.textlength(small, font=f_small)) / 2 if small else 0
+        d.text((bx, y + 8), big, font=f_big, fill=col,
+               stroke_width=stroke, stroke_fill=(0, 0, 0))
+        if small:
+            d.text((sx, y + 8 + f_big.size + 4), small, font=f_small,
+                   fill=small_col, stroke_width=stroke, stroke_fill=(0, 0, 0))
+    else:
+        d.text((x + 8, y + 8), big, font=f_big, fill=col,
+               stroke_width=stroke, stroke_fill=(0, 0, 0))
+        if small:
+            d.text((x + 8, y + 8 + f_big.size + 4), small, font=f_small,
+                   fill=small_col, stroke_width=stroke, stroke_fill=(0, 0, 0))
+
+
 # pixel nudges so clustered pins stay readable (map is small)
 PIN_OFF = {2: (-8, -8), 4: (8, -10), 5: (-8, 4), 8: (-10, -6), 9: (10, 10),
            10: (16, -10)}
@@ -345,11 +371,15 @@ def main():
     # ---- heroes 160-342 ----
     hy = 160
     hw = 328
-    for i, (num, reg, topic, src, head, deck, big, small, fn) in enumerate(FRONT[:3]):
+    for i, (num, reg, topic, src, head, deck, tag, focal, fn) in enumerate(FRONT[:3]):
         cx = 12 + i * (hw + 8)
         im = cover(Image.open(os.path.join(A, fn)).convert("RGB"), hw, 96)
         img.paste(im, (cx, hy))
-        art_text(img, d, cx, hy, hw, 96, big, small, F_ART, F_ART_S)
+        if focal:
+            focal_text(d, cx, hy, hw, 96, focal[0], focal[1], F_FOC, F_FOC_S,
+                       focal[2], focal[3])
+        else:
+            pill(d, cx + 5, hy + 5, tag)
         d.rectangle([cx, hy + 96, cx + hw, hy + 112], fill=NAVY)
         d.text((cx + 5, hy + 100), "%d  %s \u00b7 %s" % (num, reg, topic),
                font=F_KICK, fill="white")
@@ -368,12 +398,16 @@ def main():
     for r in range(2):
         for c in range(4):
             k = 3 + r * 4 + c
-            num, reg, topic, src, head, deck, big, small, fn = FRONT[k]
+            num, reg, topic, src, head, deck, tag, focal, fn = FRONT[k]
             cx = 12 + c * (sw_ + 8)
             cy = 348 + r * 166
             im = cover(Image.open(os.path.join(A, fn)).convert("RGB"), sw_, 84)
             img.paste(im, (cx, cy))
-            art_text(img, d, cx, cy, sw_, 84, big, small, F_ART2, F_ART2_S)
+            if focal:
+                focal_text(d, cx, cy, sw_, 84, focal[0], focal[1], F_FOC2, F_FOC2_S,
+                           focal[2], focal[3])
+            else:
+                pill(d, cx + 4, cy + 4, tag)
             d.rectangle([cx, cy + 84, cx + sw_, cy + 99], fill=NAVY)
             d.text((cx + 4, cy + 87), "%d  %s \u00b7 %s" % (num, reg, topic),
                    font=F_KICK, fill="white")
