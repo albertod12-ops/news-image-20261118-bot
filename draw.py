@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v12: 46 stories, UTC timeline, region strip, small in-art tags.
+"""news-image-20261118 v13: 46 stories, UTC timeline, region strip, small in-art tags.
 Draws entry.png (1024x1024, deterministic) from assets/ + world.geo.json.
 Run: python3 draw.py  -> writes entry.png in this directory."""
 import json
@@ -48,6 +48,9 @@ F_FOC = font("DejaVuSans-Bold.ttf", 30)
 F_FOC_S = font("DejaVuSans-Bold.ttf", 12)
 F_FOC2 = font("DejaVuSans-Bold.ttf", 10)
 F_FOC2_S = font("DejaVuSans-Bold.ttf", 8)
+F_GTA = font("DejaVuSans-Bold.ttf", 18)
+F_GTA_S = font("DejaVuSans-Bold.ttf", 9)
+F_GTA_T = font("DejaVuSans-Bold.ttf", 8)
 F_ALSO = font("DejaVuSans.ttf", 11)
 F_ALSO_N = font("DejaVuSans-Bold.ttf", 11)
 F_SEC = font("DejaVuSans-Bold.ttf", 12)
@@ -122,7 +125,7 @@ FRONT = [
     (11, "GLOBAL", "CULTURE", "ROCKSTAR",
      "GTA VI goes on sale after 13 years",
      "Thirteen-year wait ends; midnight launch, New Zealand first at 11:00 UTC.",
-     "", ("GTA VI", "ON SALE AFTER 13 YEARS", "WHITE", False), "s8-11.png"),
+     "", ("GTA VI", "ON SALE AFTER 13 YEARS", "00:00 · NEW ZEALAND FIRST", "WHITE", True), "s13-11.png"),
 ]
 
 # num, city, text
@@ -255,12 +258,28 @@ def art_text(img, d, x, y, w, h, big, small, f_big, f_small):
                fill="white", stroke_width=1, stroke_fill=(0, 0, 0))
 
 
-def focal_text(d, x, y, w, h, big, small, f_big, f_small, color, center):
+def focal_text(d, x, y, w, h, big, small, f_big, f_small, color, center,
+               third=None, f_third=None, small_fill=None):
     """One focal line + one small line, rstrike-style: big only where the art
-    is built around it (dark space, pale map, dark photo)."""
+    is built around it (dark space, pale map, dark photo). Optional third
+    line (GTA band) is centred as a block inside the given box."""
     col = {"YELLOW": YELLOW, "NAVY": NAVY, "WHITE": "white"}[color]
-    small_col = "white" if color != "NAVY" else NAVY
+    small_col = small_fill if small_fill is not None else ("white" if color != "NAVY" else NAVY)
     stroke = 0 if color == "NAVY" else 1
+    if third is not None:
+        lines = [(big, f_big, col), (small, f_small, small_col),
+                 (third, f_third, "white")]
+        gaps = [4, 3]
+        total = sum(f.size for _, f, _ in lines) + sum(gaps)
+        yy = y + max(0, (h - total) // 2)
+        for k, (txt, fnt, fill) in enumerate(lines):
+            if not txt:
+                continue
+            tx = x + (w - d.textlength(txt, font=fnt)) / 2
+            d.text((tx, yy), txt, font=fnt, fill=fill,
+                   stroke_width=stroke, stroke_fill=(0, 0, 0))
+            yy += fnt.size + (gaps[k] if k < len(gaps) else 0)
+        return
     if center:
         bx = x + (w - d.textlength(big, font=f_big)) / 2
         sx = x + (w - d.textlength(small, font=f_small)) / 2 if small else 0
@@ -406,8 +425,15 @@ def main():
             im = cover(Image.open(os.path.join(A, fn)).convert("RGB"), sw_, 84)
             img.paste(im, (cx, cy))
             if focal:
-                focal_text(d, cx, cy, sw_, 84, focal[0], focal[1], F_FOC2, F_FOC2_S,
-                           focal[2], focal[3])
+                if num == 11:
+                    d.rectangle([cx, cy + 38, cx + sw_, cy + 84], fill=INK)
+                    focal_text(d, cx, cy + 38, sw_, 46, focal[0], focal[1],
+                               F_GTA, F_GTA_S, focal[3], focal[4],
+                               third=focal[2], f_third=F_GTA_T,
+                               small_fill=YELLOW)
+                else:
+                    focal_text(d, cx, cy, sw_, 84, focal[0], focal[1], F_FOC2, F_FOC2_S,
+                               focal[2], focal[3])
             else:
                 pill(d, cx + 4, cy + 4, tag)
             d.rectangle([cx, cy + 84, cx + sw_, cy + 99], fill=NAVY)
