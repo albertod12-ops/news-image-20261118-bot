@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v10: 46 stories, UTC timeline, region strip, small in-art tags.
+"""news-image-20261118 v11: 46 stories, UTC timeline, region strip, small in-art tags.
 Draws entry.png (1024x1024, deterministic) from assets/ + world.geo.json.
 Run: python3 draw.py  -> writes entry.png in this directory."""
 import json
@@ -43,10 +43,10 @@ F_ART = font("DejaVuSans-Bold.ttf", 24)
 F_ART_S = font("DejaVuSans-Bold.ttf", 12)
 F_ART2 = font("DejaVuSans-Bold.ttf", 17)
 F_ART2_S = font("DejaVuSans-Bold.ttf", 11)
-F_FOC = font("DejaVuSans-Bold.ttf", 30)
-F_FOC_S = font("DejaVuSans-Bold.ttf", 12)
-F_FOC2 = font("DejaVuSans-Bold.ttf", 28)
-F_FOC2_S = font("DejaVuSans-Bold.ttf", 11)
+F_FOC = font("DejaVuSans-Bold.ttf", 10)
+F_FOC_S = font("DejaVuSans-Bold.ttf", 8)
+F_FOC2 = font("DejaVuSans-Bold.ttf", 10)
+F_FOC2_S = font("DejaVuSans-Bold.ttf", 8)
 F_ALSO = font("DejaVuSans.ttf", 11)
 F_ALSO_N = font("DejaVuSans-Bold.ttf", 11)
 F_SEC = font("DejaVuSans-Bold.ttf", 12)
