@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v11: 46 stories, UTC timeline, region strip, small in-art tags.
+"""news-image-20261118 v12: 46 stories, UTC timeline, region strip, small in-art tags.
 Draws entry.png (1024x1024, deterministic) from assets/ + world.geo.json.
 Run: python3 draw.py  -> writes entry.png in this directory."""
 import json
@@ -38,13 +38,14 @@ F_HEAD = font("DejaVuSerif-Bold.ttf", 17)
 F_HEAD_S = font("DejaVuSerif-Bold.ttf", 15)
 F_DECK = font("DejaVuSans.ttf", 11)
 F_DECK_S = font("DejaVuSans.ttf", 10)
-F_LABEL = font("DejaVuSans-Bold.ttf", 11)
+F_LABEL = font("DejaVuSans-Bold.ttf", 8)
+F_PIN = font("DejaVuSans-Bold.ttf", 11)
 F_ART = font("DejaVuSans-Bold.ttf", 24)
 F_ART_S = font("DejaVuSans-Bold.ttf", 12)
 F_ART2 = font("DejaVuSans-Bold.ttf", 17)
 F_ART2_S = font("DejaVuSans-Bold.ttf", 11)
-F_FOC = font("DejaVuSans-Bold.ttf", 10)
-F_FOC_S = font("DejaVuSans-Bold.ttf", 8)
+F_FOC = font("DejaVuSans-Bold.ttf", 30)
+F_FOC_S = font("DejaVuSans-Bold.ttf", 12)
 F_FOC2 = font("DejaVuSans-Bold.ttf", 10)
 F_FOC2_S = font("DejaVuSans-Bold.ttf", 8)
 F_ALSO = font("DejaVuSans.ttf", 11)
@@ -227,11 +228,12 @@ def cover(im, w, h):
 
 def pill(d, x, y, text, fg=INK, bg=YELLOW, fnt=F_LABEL, pad=4):
     lines = text.split(" / ") if " / " in text else [text]
+    lh = fnt.size + 2
     w = max(int(d.textlength(ln, font=fnt)) for ln in lines) + pad * 2
-    h = len(lines) * 13 + pad * 2 - 2
+    h = len(lines) * lh + pad * 2 - 2
     d.rounded_rectangle([x, y, x + w, y + h], radius=3, fill=bg)
     for i, ln in enumerate(lines):
-        d.text((x + pad, y + pad + i * 13 - 1), ln, font=fnt, fill=fg)
+        d.text((x + pad, y + pad + i * lh - 1), ln, font=fnt, fill=fg)
     return w, h
 
 
@@ -320,8 +322,8 @@ def draw_map(d, x0, y0, mw, mh):
         px, py = px + dx, py + dy
         d.ellipse([px - 8, py - 8, px + 8, py + 8], fill=RED, outline="white")
         t = str(n)
-        tw = d.textlength(t, font=F_LABEL)
-        d.text((px - tw / 2, py - 6), t, font=F_LABEL, fill="white")
+        tw = d.textlength(t, font=F_PIN)
+        d.text((px - tw / 2, py - 6), t, font=F_PIN, fill="white")
 
 
 def main():
