@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""news-image-20261118 v13: 46 stories, UTC timeline, region strip, small in-art tags.
+"""news-image-20261118 v14: 47 stories, UTC timeline, region strip, numbers strip.
 Draws entry.png (1024x1024, deterministic) from assets/ + world.geo.json.
 Run: python3 draw.py  -> writes entry.png in this directory."""
 import json
@@ -38,7 +38,7 @@ F_HEAD = font("DejaVuSerif-Bold.ttf", 17)
 F_HEAD_S = font("DejaVuSerif-Bold.ttf", 15)
 F_DECK = font("DejaVuSans.ttf", 11)
 F_DECK_S = font("DejaVuSans.ttf", 10)
-F_LABEL = font("DejaVuSans-Bold.ttf", 8)
+F_LABEL = font("DejaVuSans-Bold.ttf", 12)
 F_PIN = font("DejaVuSans-Bold.ttf", 11)
 F_ART = font("DejaVuSans-Bold.ttf", 24)
 F_ART_S = font("DejaVuSans-Bold.ttf", 12)
@@ -46,13 +46,15 @@ F_ART2 = font("DejaVuSans-Bold.ttf", 17)
 F_ART2_S = font("DejaVuSans-Bold.ttf", 11)
 F_FOC = font("DejaVuSans-Bold.ttf", 30)
 F_FOC_S = font("DejaVuSans-Bold.ttf", 12)
-F_FOC2 = font("DejaVuSans-Bold.ttf", 10)
-F_FOC2_S = font("DejaVuSans-Bold.ttf", 8)
+F_FOC2 = font("DejaVuSans-Bold.ttf", 28)
+F_FOC2_S = font("DejaVuSans-Bold.ttf", 11)
 F_GTA = font("DejaVuSans-Bold.ttf", 18)
 F_GTA_S = font("DejaVuSans-Bold.ttf", 9)
 F_GTA_T = font("DejaVuSans-Bold.ttf", 8)
 F_ALSO = font("DejaVuSans.ttf", 11)
 F_ALSO_N = font("DejaVuSans-Bold.ttf", 11)
+F_NUMB = font("DejaVuSans-Bold.ttf", 13)
+F_NUMT = font("DejaVuSans.ttf", 10)
 F_SEC = font("DejaVuSans-Bold.ttf", 12)
 F_STAT = font("DejaVuSerif-Bold.ttf", 20)
 F_STATC = font("DejaVuSans.ttf", 9)
@@ -60,7 +62,7 @@ F_DATECHK = font("DejaVuSans.ttf", 11)
 F_FOOT = font("DejaVuSans.ttf", 10)
 
 REGIONS = [
-    ("ASIA", 7, (122, 63, 160)),
+    ("ASIA", 8, (122, 63, 160)),
     ("EUROPE", 6, (36, 90, 180)),
     ("AMERICAS", 9, (30, 140, 80)),
     ("AFRICA", 6, (220, 110, 20)),
@@ -80,52 +82,52 @@ TIMELINE = [
     ("21:00 UTC", "Wall Street: Dow down 1.1%"),
 ]
 
-# num, region, topic, source, headline, deck, small tag, focal (big, small, color, center) or None, image
+# num, region, topic, source, headline, deck, small tag, focal (big, small, color, center) or None, image, verification
 FRONT = [
     (1, "ASIA", "SUMMIT", "CNBC \u00b7 CNN",
      "Xi greets Trump as APEC opens",
      "Shenzhen airport welcome; three-way session with Putin set for Thursday.",
-     "XI \u00b7 TRUMP \u00b7 PUTIN / 3-WAY TALKS \u00b7 THU 19", None, "hero7a.png"),
+     "XI \u00b7 TRUMP \u00b7 PUTIN / 3-WAY TALKS \u00b7 THU 19", None, "hero7a.png", "CONFIRMED"),
     (2, "MIDDLE EAST", "IRAN WAR", "AL JAZEERA",
      "Gulf states down Iranian drones",
      "Bahrain, Kuwait intercept; Tehran calls it answer to US strike on Qeshm.",
-     "INTERCEPTED / KUWAIT \u00b7 BAHRAIN", None, "hero7b.png"),
+     "INTERCEPTED / KUWAIT \u00b7 BAHRAIN", None, "map-gulf.png", "CLAIM"),
     (3, "SPACE", "SCIENCE", "NASA",
      "Voyager 1 reaches one light-day",
      "25.9 billion km out; a command sent today arrives tomorrow.",
-     "", ("1 LIGHT-DAY", "25.9 BILLION KM", "YELLOW", True), "hero7c.png"),
+     "", ("1 LIGHT-DAY", "25.9 BILLION KM", "YELLOW", True), "hero7c.png", "CONFIRMED"),
     (4, "EUROPE", "UKRAINE WAR", "AIR FORCE",
      "Russia fires 141 drones at Ukraine",
      "Air defences down 126 of 141; strikes land at seven sites.",
-     "141 FIRED / 126 DOWNED", None, "s7-4.png"),
+     "141 FIRED / 126 DOWNED", None, "s7-4.png", "OFFICIALS"),
     (5, "AMERICAS", "MARKETS", "FED \u00b7 AP",
      "Fed minutes point to more hikes",
      "October 27\u201328 minutes: almost all officials see further tightening; 10\u20132 hold.",
-     "MORE HIKES / DOW \u22121.1%", None, "s7-5.png"),
+     "MORE HIKES / DOW \u22121.1%", None, "s7-5.png", "CONFIRMED"),
     (6, "ASIA", "WEATHER", "IMD",
      "Cyclone Akvan bears down on Odisha",
      "Landfall Friday; 145 km/h gusts; 200,000 moved off the coast.",
-     "200,000 MOVED / ODISHA \u00b7 FRI 20 NOV", None, "s7-6.png"),
+     "200,000 MOVED / ODISHA \u00b7 FRI 20 NOV", None, "map-odisha.png", "CONFIRMED"),
     (7, "AFRICA", "SUDAN WAR", "AMNESTY",
      "Amnesty: RSF drones killed 37",
      "Nine strikes in El Obeid, June to August; war-crimes inquiry urged.",
-     "37 KILLED / EL OBEID", None, "s7-7.png"),
+     "37 KILLED / EL OBEID", None, "s7-7.png", "CLAIM"),
     (8, "EUROPE", "UKRAINE AID", "EU",
      "EU proposes \u20ac45bn loan to Kyiv",
      "For 2027; repayment only if Russia pays reparations.",
-     "\u20ac45 BILLION / LOAN \u00b7 2027", None, "s7-8.png"),
+     "", ("€45bn", "EU LOAN · 2027", "NAVY", False), "s7-8.png", "OFFICIALS"),
     (9, "MIDDLE EAST", "GAZA", "REUTERS",
      "Israeli tanks push past Yellow Line",
      "First drive into central Gaza near Nuseirat; tunnel found; three killed.",
-     "YELLOW LINE / NUSEIRAT \u00b7 CENTRAL GAZA", None, "s7-9.png"),
+     "YELLOW LINE / NUSEIRAT · CENTRAL GAZA", None, "map-gaza.png", "CONFIRMED"),
     (10, "AMERICAS", "US POLITICS", "NPR \u00b7 CBS",
      "Jeffries wins Democrats' speaker nod",
      "Caucus vote 251\u201311; floor vote set for January 3.",
-     "", ("251\u201311", "JEFFRIES FOR SPEAKER", "NAVY", False), "s7-10.png"),
+     "", ("251–11", "JEFFRIES FOR SPEAKER", "NAVY", False), "s7-10.png", "CONFIRMED"),
     (11, "GLOBAL", "CULTURE", "ROCKSTAR",
      "GTA VI goes on sale after 13 years",
      "Thirteen-year wait ends; midnight launch, New Zealand first at 11:00 UTC.",
-     "", ("GTA VI", "ON SALE AFTER 13 YEARS", "00:00 · NEW ZEALAND FIRST", "WHITE", True), "s13-11.png"),
+     "", ("GTA VI", "ON SALE AFTER 13 YEARS", "00:00 · NEW ZEALAND FIRST", "WHITE", True), "s13-11.png", "CONFIRMED"),
 ]
 
 # num, city, text
@@ -165,13 +167,14 @@ ALSO = [
     (44, "Bogota", "Colombia's economy shrinks 0.8% in Q3"),
     (45, "Maputo", "Mondlane trial, day two; defence seeks acquittal"),
     (46, "New York", "Anthropic prices IPO at $83, above range"),
+    (47, "Dhaka", "wage protests shut 55 factories"),
 ]
 
 STATS = [
-    ("25.9bn km", "Voyager 1, one light-day out"),
-    ("251\u201311", "Jeffries' vote for Speaker"),
+    ("25.9bn km", "Voyager 1, one light-day"),
+    ("251\u201311", "Jeffries' Speaker vote"),
     ("141", "Drones fired at Ukraine"),
-    ("200,000", "Odisha moves off the coast"),
+    ("200,000", "Moved off Odisha coast"),
 ]
 
 PINS = {
@@ -188,7 +191,7 @@ DOTS = {
     32: (-0.1, 51.5), 33: (30.5, 50.4), 34: (34.4, 31.5), 35: (15.3, -4.3),
     36: (-6.8, 34.0), 37: (30.7, 36.9), 38: (2.3, 48.9), 39: (121.0, 14.6),
     40: (139.7, 35.7), 41: (86.1, 55.4), 42: (46.7, 24.7), 43: (-75.7, 45.4),
-    44: (-74.1, 4.7), 45: (32.6, -25.9), 46: (-74.0, 40.7),
+    44: (-74.1, 4.7), 45: (32.6, -25.9), 46: (-74.0, 40.7), 47: (90.4, 23.8),
 }
 
 PROBLEMS = []
@@ -360,7 +363,7 @@ def main():
     d.text((98, 26), "Wednesday 18 November 2026", font=F_TITLE, fill="white")
     d.text((98, 70), "Everything on this page happened, or was first reported, "
            "on Wednesday 18 November 2026.", font=F_SUB, fill=(210, 210, 210))
-    d.text((1012, 11), "46 STORIES \u00b7 7 REGIONS \u00b7 ONE PAGE",
+    d.text((1012, 11), "47 STORIES \u00b7 7 REGIONS \u00b7 ONE PAGE",
            font=F_EYE, fill="white", anchor="ra")
     d.rectangle([0, 88, W, 91], fill=GOLD)
 
@@ -373,55 +376,68 @@ def main():
                font=F_REG, fill="white", anchor="ma")
         x += segw
 
-    # ---- UTC timeline 114-154 ----
-    d.rectangle([12, 114, 100, 154], fill=RED)
-    d.text((56, 122), "THE DAY", font=F_TTIME, fill="white", anchor="ma")
-    d.text((56, 136), "IN UTC", font=F_TTIME, fill="white", anchor="ma")
+    # ---- the day in numbers 114-133 ----
+    d.rectangle([12, 114, 150, 133], fill=RED)
+    d.text((81, 119), "THE DAY IN NUMBERS", font=F_TTIME, fill="white", anchor="ma")
+    nums = [("141", "drones fired"), ("126", "downed"), ("25.9bn km", "Voyager 1"),
+            ("55", "factories shut"), ("251\u201311", "Jeffries vote"), ("11,300+", "Ebola cases")]
+    nx = 158
+    for val, lab in nums:
+        d.text((nx, 118), val, font=F_NUMB, fill=NAVY)
+        nx += d.textlength(val, font=F_NUMB) + 4
+        d.text((nx, 120), lab, font=F_NUMT, fill=GREY)
+        nx += d.textlength(lab, font=F_NUMT) + 14
+
+    # ---- UTC timeline 136-176 ----
+    d.rectangle([12, 136, 100, 176], fill=RED)
+    d.text((56, 144), "THE DAY", font=F_TTIME, fill="white", anchor="ma")
+    d.text((56, 158), "IN UTC", font=F_TTIME, fill="white", anchor="ma")
     bx = 104
     bw = (W - 12 - bx) / 8.0
     for i, (t, txt) in enumerate(TIMELINE):
         cx = bx + i * bw
         if i > 0:
-            d.line([cx, 116, cx, 152], fill=RULE, width=1)
-        d.text((cx + 5, 116), t, font=F_TTIME, fill=NAVY)
+            d.line([cx, 138, cx, 174], fill=RULE, width=1)
+        d.text((cx + 5, 138), t, font=F_TTIME, fill=NAVY)
         lines = wrap(d, txt, F_TTEXT, bw - 10, max_lines=2)
         for j, ln in enumerate(lines):
-            d.text((cx + 5, 130 + j * 11), ln, font=F_TTEXT, fill=INK)
-    d.line([12, 156, W - 12, 156], fill=RULE, width=1)
+            d.text((cx + 5, 152 + j * 11), ln, font=F_TTEXT, fill=INK)
+    d.line([12, 178, W - 12, 178], fill=RULE, width=1)
 
-    # ---- heroes 160-342 ----
-    hy = 160
+    # ---- heroes 182-364 ----
+    hy = 182
     hw = 328
-    for i, (num, reg, topic, src, head, deck, tag, focal, fn) in enumerate(FRONT[:3]):
+    for i, (num, reg, topic, src, head, deck, tag, focal, fn, ver) in enumerate(FRONT[:3]):
         cx = 12 + i * (hw + 8)
-        im = cover(Image.open(os.path.join(A, fn)).convert("RGB"), hw, 96)
+        im = cover(Image.open(os.path.join(A, fn)).convert("RGB"), hw, 88)
         img.paste(im, (cx, hy))
         if focal:
-            focal_text(d, cx, hy, hw, 96, focal[0], focal[1], F_FOC, F_FOC_S,
+            focal_text(d, cx, hy, hw, 88, focal[0], focal[1], F_FOC, F_FOC_S,
                        focal[2], focal[3])
         else:
             pill(d, cx + 5, hy + 5, tag)
-        d.rectangle([cx, hy + 96, cx + hw, hy + 112], fill=NAVY)
-        d.text((cx + 5, hy + 100), "%d  %s \u00b7 %s" % (num, reg, topic),
+        d.rectangle([cx, hy + 88, cx + hw, hy + 104], fill=NAVY)
+        d.text((cx + 5, hy + 92), "%d  %s \u00b7 %s" % (num, reg, topic),
                font=F_KICK, fill="white")
-        sw = d.textlength(src, font=F_SRC)
-        d.text((cx + hw - 5 - sw, hy + 101), src, font=F_SRC, fill=GOLD)
+        vtxt = "%s \u00b7 %s" % (ver, src)
+        sw = d.textlength(vtxt, font=F_SRC)
+        d.text((cx + hw - 5 - sw, hy + 93), vtxt, font=F_SRC, fill=GOLD)
         lines = wrap(d, head, F_HEAD, hw - 6, max_lines=2)
         for j, ln in enumerate(lines):
-            d.text((cx + 3, hy + 116 + j * 20), ln, font=F_HEAD, fill=INK)
+            d.text((cx + 3, hy + 108 + j * 20), ln, font=F_HEAD, fill=INK)
         dlines = wrap(d, deck, F_DECK, hw - 6, max_lines=2)
         for j, ln in enumerate(dlines):
-            d.text((cx + 3, hy + 116 + len(lines) * 20 + 2 + j * 13),
+            d.text((cx + 3, hy + 108 + len(lines) * 20 + 2 + j * 13),
                    ln, font=F_DECK, fill=(60, 60, 60))
 
-    # ---- smalls 348-674 (2 rows x 4, image 244x84) ----
+    # ---- smalls 364-684 (2 rows x 4, image 244x84) ----
     sw_ = 244
     for r in range(2):
         for c in range(4):
             k = 3 + r * 4 + c
-            num, reg, topic, src, head, deck, tag, focal, fn = FRONT[k]
+            num, reg, topic, src, head, deck, tag, focal, fn, ver = FRONT[k]
             cx = 12 + c * (sw_ + 8)
-            cy = 348 + r * 166
+            cy = 364 + r * 160
             im = cover(Image.open(os.path.join(A, fn)).convert("RGB"), sw_, 84)
             img.paste(im, (cx, cy))
             if focal:
@@ -439,8 +455,12 @@ def main():
             d.rectangle([cx, cy + 84, cx + sw_, cy + 99], fill=NAVY)
             d.text((cx + 4, cy + 87), "%d  %s \u00b7 %s" % (num, reg, topic),
                    font=F_KICK, fill="white")
-            swd = d.textlength(src, font=F_SRC)
-            d.text((cx + sw_ - 4 - swd, cy + 88), src, font=F_SRC, fill=GOLD)
+            left = "%d  %s · %s" % (num, reg, topic)
+            vtxt = "%s · %s" % (ver, src.split(" · ")[0])
+            if d.textlength(left, font=F_KICK) + d.textlength(vtxt, font=F_SRC) + 8 > sw_:
+                vtxt = ver
+            swd = d.textlength(vtxt, font=F_SRC)
+            d.text((cx + sw_ - 4 - swd, cy + 88), vtxt, font=F_SRC, fill=GOLD)
             lines = wrap(d, head, F_HEAD_S, sw_ - 4, max_lines=2)
             for j, ln in enumerate(lines):
                 d.text((cx + 2, cy + 102 + j * 17), ln, font=F_HEAD_S, fill=INK)
@@ -449,16 +469,16 @@ def main():
                 d.text((cx + 2, cy + 102 + len(lines) * 17 + 1 + j * 12),
                        ln, font=F_DECK_S, fill=(60, 60, 60))
 
-    # ---- map + also 680-926 ----
-    my = 680
+    # ---- map + also 690-928 ----
+    my = 690
     d.text((12, my), "WHERE IT HAPPENED", font=F_SEC, fill=INK)
     d.line([12, my + 16, 300, my + 16], fill=INK, width=1)
-    draw_map(d, 12, my + 22, 288, 140)
-    d.text((12, my + 164), "3 \u2192 to Voyager 1", font=F_TTEXT, fill=GREY)
+    draw_map(d, 12, my + 22, 288, 132)
+    d.text((12, my + 158), "3 \u2192 to Voyager 1", font=F_TTEXT, fill=GREY)
     # stats 2x2 grid under map
     for si, (val, cap) in enumerate(STATS):
         sx = 12 + (si % 2) * 146
-        sy = my + 180 + (si // 2) * 34
+        sy = my + 176 + (si // 2) * 32
         d.text((sx, sy), val, font=F_STAT, fill=NAVY)
         clines = wrap(d, cap, F_STATC, 140, max_lines=2)
         for j, ln in enumerate(clines):
@@ -466,7 +486,7 @@ def main():
 
     ax = 316
     d.text((ax, my), "ALSO ON WEDNESDAY 18 NOVEMBER", font=F_SEC, fill=INK)
-    d.text((1012, my), "35 MORE STORIES", font=F_SEC, fill=INK, anchor="ra")
+    d.text((1012, my), "36 MORE STORIES", font=F_SEC, fill=INK, anchor="ra")
     d.line([ax, my + 16, 1012, my + 16], fill=INK, width=1)
     colw = 344
     rows = 18
@@ -496,9 +516,9 @@ def main():
     # ---- footer 978-1004 ----
     fy = 978
     d.text((512, fy), "Reads at three sizes: the date and 3 leads at thumbnail size \u00b7 "
-           "11 pictures at half size \u00b7 all 46 stories at full size.",
+           "11 pictures at half size \u00b7 all 47 stories at full size.",
            font=F_FOOT, fill=GREY, anchor="ma")
-    d.text((512, fy + 13), "Pins 1\u201311, dots 12\u201346. Sources: AP \u00b7 Reuters \u00b7 AFP \u00b7 CNN \u00b7 CNBC \u00b7 "
+    d.text((512, fy + 13), "Pins 1\u201311, dots 12\u201347. Sources: AP \u00b7 Reuters \u00b7 AFP \u00b7 CNN \u00b7 CNBC \u00b7 "
            "NPR \u00b7 CBS \u00b7 Fed \u00b7 ONS \u00b7 IMD \u00b7 NASA \u00b7 Amnesty. Original illustrations.",
            font=F_FOOT, fill=GREY, anchor="ma")
 
